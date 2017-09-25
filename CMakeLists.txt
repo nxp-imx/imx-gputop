@@ -52,57 +52,6 @@ endif()
 
 include_directories(${GPUPERFCNT_INCLUDE_PATH})
 
-# SET(TEST_ENV_CROSS "$ENV{ARCH}x")
-# 
-# if (${TEST_ENV_CROSS} STREQUAL "armx")
-# 	if (NOT EXISTS ${GPU_INCLUDE_PATH})
-# 		message(FATAL_ERROR "Please supply a valid path for VSI_GPU_INCLUDE_PATH: (Was: '${VSI_GPU_INCLUDE_PATH}')")
-# 	else()
-# 		# try to find gc_hal.h
-# 		find_path(GC_HAL_INCLUDE_DIR gc_hal.h PATHS ${VSI_GPU_INCLUDE_PATH} NO_CMAKE_FIND_ROOT_PATH)
-# 		if (GC_HAL_INCLUDE_DIR)
-# 			set(GC_HAL_FOUND 1)
-# 		endif()
-# 	endif()
-# endif()
-# 
-# if (${TEST_ENV_CROSS} STREQUAL "arm64x")
-# 	if (NOT EXISTS ${VSI_GPU_INCLUDE_PATH})
-# 		message(FATAL_ERROR "Please supply a valid path for VSI_GPU_INCLUDE_PATH: (Was: '${VSI_GPU_INCLUDE_PATH}')")
-# 	else()
-# 		# try to find gc_hal.h
-# 		find_path(GC_HAL_INCLUDE_DIR gc_hal.h PATHS ${VSI_GPU_INCLUDE_PATH} NO_CMAKE_FIND_ROOT_PATH)
-# 		if (GC_HAL_INCLUDE_DIR)
-# 			set(GC_HAL_FOUND 1)
-# 		endif()
-# 	endif()
-# endif()
-# 
-# if (TOOLCHAIN STREQUAL QNX)
-# 	message(STATUS "QNX Toolchain")
-# 	if (NOT EXISTS ${VSI_GPU_INCLUDE_PATH})
-# 		message(FATAL_ERROR "Please supply a valid path for VSI_GPU_INCLUDE_PATH: (Was: '${VSI_GPU_INCLUDE_PATH}')")
-# 	else()
-# 		# try to find gc_hal.h
-# 		find_path(GC_HAL_INCLUDE_DIR gc_hal.h PATHS ${VSI_GPU_INCLUDE_PATH} NO_CMAKE_FIND_ROOT_PATH)
-# 		if (GC_HAL_INCLUDE_DIR)
-# 			set(GC_HAL_FOUND 1)
-# 		endif()
-# 	endif()
-# endif()
-
-# if (${TEST_ENV_CROSS} STREQUAL "armx" OR TOOLCHAIN STREQUAL QNX OR ${TEST_ENV_CROSS} STREQUAL "arm64x")
-# 	if (NOT GC_HAL_FOUND)
-# 		message(FATAL_ERROR "Could not find proper header.")
-# 	else()
-# 		add_definitions(-D__VSI_HAL__)
-# 		message(STATUS "Using SDK HAL headers.")
-# 	endif()
-# endif()
-
-
-#include_directories(include ${VSI_GPU_INCLUDE_PATH})
-
 if (${CMAKE_SYSTEM_NAME} STREQUAL "QNX")
 	add_definitions(-D__QNXTO__)
 	include_directories($ENV{QNX_TARGET}/usr/include)
@@ -122,7 +71,8 @@ add_executable(gputop gputop/top.c gputop/debugfs.c)
 
 if (ENABLE_STATIC)
 	message(STATUS "Build against static...")
-	target_link_libraries(gputop gpuperfcntstatic)
+	SET( CMAKE_EXE_LINKER_FLAGS "-L ${GPUPERFCNT_LIB_PATH}")
+	target_link_libraries(gputop gpuperfcnt)
 else()
 	message(STATUS "Build against shared...")
 	SET( CMAKE_EXE_LINKER_FLAGS "-L ${GPUPERFCNT_LIB_PATH}")

@@ -1,5 +1,7 @@
 # GPUTOP #
 
+*gputop* is an example application using libgpuperfnct library. See
+man/gputop.md on how to use it.
 
 # Bulding #
 
