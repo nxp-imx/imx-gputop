@@ -49,7 +49,8 @@
 /* current flags */
 static uint32_t flags = 0x0;
 
-static char *version = XSTR(GIT_SHA);
+static const char *git_version = XSTR(GIT_SHA);
+static const char *version = "1.0";
 
 /* if a SIGINT/SIGTERM has been received */
 static int volatile sig_recv = 0;
@@ -1683,7 +1684,7 @@ static
 void help(void)
 {
 	dprintf("Usage:\n");
-	dprintf("  %s (%s) [-m mode] [-c <ctx>] [-x]\n", prg_name, version);
+	dprintf("  %s (GIT: %s, V: %s) [-m mode] [-c <ctx>] [-x]\n", prg_name, git_version, version);
 	dprintf("\n");
 	dprintf("  -m <mode>\n");
 	dprintf("                mem         Show memory usage of clients attached to GPU\n");
@@ -1706,7 +1707,7 @@ void help(void)
 static void
 show_version(void)
 {
-	fprintf(stdout, "version: %s\n", version);
+	fprintf(stdout, "GIT: %s, Version: %s\n", git_version, version);
 	exit(EXIT_SUCCESS);
 }
 
