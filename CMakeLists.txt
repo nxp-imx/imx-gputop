@@ -40,7 +40,7 @@ else()
 			message(FATAL_ERROR "Could not found include headers for libgpuperfcnt")
 		endif()
 		# try to find the library itself
-		find_path(GPUPERFCNT_LIB_SHARED_DIR gpuperfcnt PATHS ${GPUPERFCNT_LIB_PATH} NO_CMAKE_FIND_ROOT_PATH)
+		find_path(GPUPERFCNT_LIB_SHARED_DIR libgpuperfcnt.so PATHS ${GPUPERFCNT_LIB_PATH} NO_CMAKE_FIND_ROOT_PATH)
 		if (GPUPERFCNT_LIB_SHARED_DIR)
 			message(STATUS "Found GPUPERFCNT_LIB_PATH @ ${GPUPERFCNT_LIB_PATH}")
 			set(GPUPERFCNT_LIB_FOUND 1)

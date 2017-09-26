@@ -39,9 +39,9 @@
 
 #include "debugfs.h"
 
-#include "gpuperfcnt/gpuperfcnt.h"
-#include "gpuperfcnt/gpuperfcnt_vivante.h"
-#include "gpuperfcnt/gpuperfcnt_log.h"
+#include <gpuperfcnt/gpuperfcnt.h>
+#include <gpuperfcnt/gpuperfcnt_vivante.h>
+#include <gpuperfcnt/gpuperfcnt_log.h>
 
 #include "states.c"
 #include "top.h"
