@@ -50,7 +50,7 @@
 static uint32_t flags = 0x0;
 
 static const char *git_version = XSTR(GIT_SHA);
-static const char *version = "1.0";
+static const char *version = "1.1";
 
 /* if a SIGINT/SIGTERM has been received */
 static int volatile sig_recv = 0;
@@ -1265,7 +1265,7 @@ gtop_get_ctx_from_keyboard(struct perf_device *dev)
 	/* if we don't support this board */
 	if (gtop_is_chip_model(0x7000, dev)) {
 		tty_init(&tty_old);
-		gtop_wait_for_keyboard("GC7000 not supported at the moment!.\n");
+		gtop_wait_for_keyboard("GC7000 not supported at the moment!\n");
 		tty_reset(&tty_old);
 		goto out;
 	}
@@ -1599,8 +1599,8 @@ gtop_check_keyboard(struct perf_device *dev)
 		samples_mode = 0;
 
 	/* disable profiler when not in counter page */
-	if (curr_page == PAGE_SHOW_CLIENTS ||
-	    curr_page == PAGE_VID_MEM_USAGE) {
+	if ((curr_page == PAGE_SHOW_CLIENTS ||
+	     curr_page == PAGE_VID_MEM_USAGE) && profiler_state.enabled) {
 		gtop_disable_profiling(dev);
 		perf_profiler_stop(dev);
 		profiler_state.enabled = false;
