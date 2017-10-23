@@ -2,15 +2,13 @@
 #set (GPUPERFCNT_INC_SEARCH_PATH "$SDKTARGETSYSROOT/usr/include/gpuperfcnt")
 #set (GPUPERFCNT_LIB_SEARCH_PATH "$SDKTARGETSYSROOT/usr/lib")
 
-find_path (GPUPERFCNT_INCLUDE_DIR gpuperfcnt.h
-	PATHS $ENV{SDKTARGETSYSROOT}/usr/include/gpuperfcnt
-	NO_CMAKE_FIND_ROOT_PATH
+find_path (GPUPERFCNT_INCLUDE_DIR gpuperfcnt/gpuperfcnt.h
+	ONLY_CMAKE_FIND_ROOT_PATH
 	DOC "The directory where libgpuperfcnt header resides"
 	)
 
 find_library (GPUPERFCNT_LIBRARY_DIR libgpuperfcnt.so
-	PATHS $ENV{SDKTARGETSYSROOT}/usr/lib
-	NO_CMAKE_FIND_ROOT_PATH
+	ONLY_CMAKE_FIND_ROOT_PATH
 	DOC "The directory where libgpuperfcnt library resides"
 	)
 
