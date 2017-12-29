@@ -51,7 +51,7 @@
 static uint32_t flags = 0x0;
 
 static const char *git_version = XSTR(GIT_SHA);
-static const char *version = "1.1";
+static const char *version = "1.2";
 
 /* if a SIGINT/SIGTERM has been received */
 static int volatile sig_recv = 0;
