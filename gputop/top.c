@@ -34,6 +34,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include <termios.h>
 
@@ -1446,6 +1447,8 @@ gtop_check_keyboard(struct perf_device *dev)
 	/* please compiler */
 	(void) nread;
 
+	int prev_page = curr_page;
+
 	switch (buf) {
 	case KEY_H:
 	case KEY_QUESTION_MARK:
@@ -1480,6 +1483,8 @@ gtop_check_keyboard(struct perf_device *dev)
 		break;
 	case KB_RIGHT:
 	case KB_UP:
+		curr_page++;
+
 		/* verify if we indeed still have a valid context, but
 		 * we are displaying old info */
 		if (curr_page == PAGE_COUNTER_PART1 ||
@@ -1500,16 +1505,16 @@ gtop_check_keyboard(struct perf_device *dev)
 				}
 			} else {
 				gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n");
+				curr_page = prev_page;
 				break;
 			}
 		}
-
-		curr_page++;
 		break;
 	case KB_LEFT:
 	case KB_DOWN:
 		/* verify if we indeed still have a valid context, but
 		 * we are displaying old info */
+		curr_page--;
 
 		if (curr_page == PAGE_COUNTER_PART1 ||
 		    curr_page == PAGE_COUNTER_PART2) {
@@ -1528,10 +1533,10 @@ gtop_check_keyboard(struct perf_device *dev)
 				}
 			} else {
 				gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n");
+				curr_page = prev_page;
 				break;
 			}
 		}
-		curr_page--;
 		break;
 	case KEY_0:
 		curr_page = PAGE_SHOW_CLIENTS;
@@ -1671,14 +1676,16 @@ show_hw_counters:
 			gtop_scale_counters(&gtop, diff);
 		}
 
+		/* figure out if we got anything from keyboard */
+		if (gtop_check_keyboard(dev) < 0)
+			goto out;
+
+
 		gtop_display_interactive(dev, gtop);
 
 		if (FLAG_IS_SET(flags, FLAG_SHOW_BATCH_CONTEXTS))
 			goto out;
 
-		/* figure out if we got anything from keyboard */
-		if (gtop_check_keyboard(dev) < 0)
-			goto out;
 
 		begin_time = end_time;
 
