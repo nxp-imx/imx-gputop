@@ -42,6 +42,8 @@ else()
 	if (GPUPERFCNT_FOUND)
 		message(STATUS "libgpuperfcnt found")
 		include_directories(${GPUPERFCNT_INCLUDE_DIR})
+	else()
+		message(FATAL_ERROR "libgpuperfcnt not found")
 	endif()
 endif()
 
