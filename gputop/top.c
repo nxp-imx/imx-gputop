@@ -1316,7 +1316,7 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 {
 	int s;
 	struct timespec interval = {};
-	int err;
+	int err = 0;
 
 	interval.tv_sec = 0;
 	interval.tv_nsec = (USEC_PER_SEC / samples);
