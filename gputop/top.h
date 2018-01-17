@@ -112,6 +112,7 @@ enum flags_type {
 	FLAG_DELAY = 5,
 	FLAG_SHOW_CONTEXTS = 6,
 	FLAG_SHOW_BATCH_CONTEXTS = 7,
+	FLAG_SHOW_BATCH_PERF = 8,
 };
 
 /* 

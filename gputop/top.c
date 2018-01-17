@@ -51,7 +51,7 @@
 static uint32_t flags = 0x0;
 
 static const char *git_version = XSTR(GIT_SHA);
-static const char *version = "1.2";
+static const char *version = "1.3";
 
 /* if a SIGINT/SIGTERM has been received */
 static int volatile sig_recv = 0;
@@ -187,7 +187,14 @@ static void
 tty_init(struct termios *tty_o)
 {
 	struct termios new_tty;
-	tcgetattr(STDIN_FILENO, tty_o);
+
+	if (tcgetattr(STDIN_FILENO, tty_o) < 0 &&
+	    !FLAG_IS_SET(flags, FLAG_SHOW_BATCH_PERF)) {
+		fprintf(stderr, "Failed to get tty: %s\n", strerror(errno));
+		fprintf(stderr, "Please use -f option when running in batch mode\n");
+		exit(EXIT_FAILURE);
+	}
+
 	new_tty = *tty_o;
 
 	/* 
@@ -198,7 +205,12 @@ tty_init(struct termios *tty_o)
 	new_tty.c_cc[VMIN]  = 1;
 	new_tty.c_cc[VTIME] = 0;
 
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_tty);
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_tty) < 0 &&
+	    !FLAG_IS_SET(flags, FLAG_SHOW_BATCH_PERF)) {
+		fprintf(stderr, "Failed to set tty: %s\n", strerror(errno));
+		fprintf(stderr, "Please use -f option when running in batch mode\n");
+		exit(EXIT_FAILURE);
+	}
 }
 
 static void
@@ -232,6 +244,12 @@ get_input_char(void)
 #endif
 
 	return (rc < 0) ? 0 : rc;
+}
+
+static void
+delay(void)
+{
+	nanosleep(&(struct timespec) { .tv_sec = 1, .tv_nsec = 0 }, NULL);
 }
 
 static bool
@@ -1630,7 +1648,7 @@ gtop_check_keyboard(struct perf_device *dev)
  * retrieve PART1 and PART2
  */
 static void
-gtop_retrieve_perf_counters(struct perf_device *dev)
+gtop_retrieve_perf_counters(struct perf_device *dev, bool batch)
 {
 	struct gtop gtop = {};
 
@@ -1676,16 +1694,20 @@ show_hw_counters:
 			gtop_scale_counters(&gtop, diff);
 		}
 
-		/* figure out if we got anything from keyboard */
-		if (gtop_check_keyboard(dev) < 0)
-			goto out;
+		/* figure out if we got anything from keyboard, or if we're
+		 * running batched */
+		if (batch) {
+			delay();
+		} else {
+			if (gtop_check_keyboard(dev) < 0)
+				goto out;
+		}
 
 
 		gtop_display_interactive(dev, gtop);
 
 		if (FLAG_IS_SET(flags, FLAG_SHOW_BATCH_CONTEXTS))
 			goto out;
-
 
 		begin_time = end_time;
 
@@ -1714,6 +1736,7 @@ void help(void)
 
 	dprintf("  -c <ctx>      Specify context to track\n");
 	dprintf("  -b            Show batch (instantaneous of requested mode)\n");
+	dprintf("  -f            Read counters in batch mode\n");
 	dprintf("  -x            Display contexts in memory viewing page\n");
 	dprintf("  -i		Ignore errors when opening a connection with the driver\n");
 	dprintf("  -v            Show version\n");
@@ -1734,7 +1757,7 @@ parse_args(int argc, char **argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "m:hc:xbv")) != -1) {
+	while ((c = getopt(argc, argv, "m:hc:xbvf")) != -1) {
 		switch (c) {
 		case 'm':
 			SET_FLAG(flags, FLAG_MODE);
@@ -1765,6 +1788,9 @@ parse_args(int argc, char **argv)
 			break;
 		case 'b':
 			SET_FLAG(flags, FLAG_SHOW_BATCH_CONTEXTS);
+			break;
+		case 'f':
+			SET_FLAG(flags, FLAG_SHOW_BATCH_PERF);
 			break;
 		case 'v':
 			show_version();
@@ -1824,6 +1850,7 @@ int main(int argc, char *argv[])
 {
 	struct perf_device *dev = NULL;
 	int err;
+	bool batch = false;
 
 
 	memset(&gtop_info, 0, sizeof(struct gtop_hw_drv_info));
@@ -1844,7 +1871,7 @@ int main(int argc, char *argv[])
 	if (err < 0) {
 		/*
 		 * error retrieval is driver dependent so for VSI/Vivante
-		 * we check directly for string
+		 * we check directly for string err
 		 */
 		if (!strncmp(perf_get_last_error(dev), KERNEL_MISMATCH_ERR, strlen(KERNEL_MISMATCH_ERR))) {
 			fprintf(stderr, "Warning!\n");
@@ -1880,7 +1907,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	gtop_retrieve_perf_counters(dev);
+	if (FLAG_IS_SET(flags, FLAG_SHOW_BATCH_PERF))
+		batch = true;
+
+	gtop_retrieve_perf_counters(dev, batch);
 
 	gtop_free_gtop_info(dev, &gtop_info);
 
