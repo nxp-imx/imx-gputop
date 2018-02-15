@@ -11,7 +11,7 @@ option (ENABLE_STATIC	"Build agasint static library." OFF)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -Wall -Wextra -Werror -Wstrict-prototypes -Wmissing-prototypes -std=c99 -O2")
 
-execute_process(COMMAND git log COMMAND head -1 COMMAND awk "{print $2}" COMMAND head -c 12 OUTPUT_VARIABLE GIT_SHA_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git --git-dir ${CMAKE_SOURCE_DIR}/.git log COMMAND head -1 COMMAND awk "{print $2}" COMMAND head -c 12 OUTPUT_VARIABLE GIT_SHA_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 message(STATUS "Git version is ${GIT_SHA_VERSION}")
 
 # if neither static nor shared is enabled default to shared
