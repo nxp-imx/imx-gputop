@@ -26,6 +26,7 @@
 #include <unistd.h>
 #if defined(__linux__)
 #include <getopt.h>
+#include <linux/limits.h>
 #endif
 #include <errno.h>
 #include <time.h>
@@ -43,6 +44,7 @@
 #include <gpuperfcnt/gpuperfcnt.h>
 #include <gpuperfcnt/gpuperfcnt_vivante.h>
 #include <gpuperfcnt/gpuperfcnt_log.h>
+#include <ddrperfcnt/ddr-perf.h>
 
 #include "states.c"
 #include "top.h"
@@ -51,7 +53,7 @@
 static uint32_t flags = 0x0;
 
 static const char *git_version = XSTR(GIT_SHA);
-static const char *version = "1.3";
+static const char *version = "1.4";
 
 /* if a SIGINT/SIGTERM has been received */
 static int volatile sig_recv = 0;
@@ -130,6 +132,13 @@ struct dma_table dma_tables[] = {
 };
 
 #define NUM_DMA_TABLES (sizeof(dma_tables) / sizeof(dma_tables[0]))
+
+/* what DDR pmus we want to read, if you want to add more you also need
+ * to modify PERF_DDR_PMUS_COUNT  */
+static struct perf_pmu_ddr perf_pmu_ddrs[] = {
+	{ "ddr0", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
+	{ "ddr1", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
+};
 
 static uint64_t
 get_ns_time(void)
@@ -633,6 +642,139 @@ gtop_display_vid_mem_usage(struct perf_device *dev, struct gtop_hw_drv_info *gin
 }
 
 static void
+gtop_configure_pmus(void)
+{
+	uint32_t config, type;
+	unsigned int i, j;
+
+	for_all_pmus(perf_pmu_ddrs, i, j) {
+		const char *type_name = PMU_GET_TYPE_NAME(perf_pmu_ddrs, i);
+		const char *event_name = PMU_GET_EVENT_NAME(perf_pmu_ddrs, i, j);
+
+		type = perf_event_pmu_get_type(type_name);
+		config = perf_event_pmu_get_event(type_name, event_name);
+
+		/* we might end up running on boards which do not support DDR or
+		 * those PMus so we just ignore them */
+		if (type == 0 || config == 0)
+			continue;
+
+		/* assign the fd */
+		PMU_GET_FD(perf_pmu_ddrs, i, j) =
+			perf_event_pmu_ddr_config(type, config);
+
+		assert(PMU_GET_FD(perf_pmu_ddrs, i, j) > 0);
+	}
+}
+
+static void
+gtop_enable_pmus(void)
+{
+	unsigned int i, j;
+
+	for_all_pmus(perf_pmu_ddrs, i, j) {
+		int fd = PMU_GET_FD(perf_pmu_ddrs, i, j);
+		if (fd > 0) {
+			perf_event_pmu_reset(fd);
+			perf_event_pmu_enable(fd);
+		}
+	}
+}
+
+static void
+gtop_disable_pmus(void)
+{
+	unsigned int i, j;
+
+	for_all_pmus(perf_pmu_ddrs, i, j) {
+		int fd = PMU_GET_FD(perf_pmu_ddrs, i, j);
+		if (fd > 0)
+			perf_event_pmu_disable(fd);
+	}
+}
+
+static inline void
+gtop_display_white_space(size_t amount)
+{
+	for (size_t i = 0; i < amount; i++)
+		fprintf(stdout, " ");
+}
+
+static void
+gtop_display_perf_pmus(void)
+{
+	static int enabled = 0;
+	unsigned int i, j;
+	if (!enabled) {
+		gtop_configure_pmus();
+		gtop_enable_pmus();
+		enabled = 1;
+	}
+
+	fprintf(stdout, "\n");
+	fprintf(stdout, "%s%5s", underlined_color, "");
+
+	for_all_pmus(perf_pmu_ddrs, i, j) {
+		int fd = PMU_GET_FD(perf_pmu_ddrs, i, j);
+		if (fd > 0) {
+			const char *type_name = PMU_GET_TYPE_NAME(perf_pmu_ddrs, i);
+			const char *event_name = PMU_GET_EVENT_NAME(perf_pmu_ddrs, j, j);
+
+			fprintf(stdout, "%s/%s%3s",
+				type_name, event_name, "");
+
+		}
+	}
+
+	fprintf(stdout, "%s\n", regular_color);
+	fprintf(stdout, "%5s", "");
+	
+	char buf[PATH_MAX];
+	/* use a marker to known how much we need to shift on the right and
+	 * print white spaces */
+	int p = 0;
+
+	for_all_pmus(perf_pmu_ddrs, i, j) {
+		int fd = PMU_GET_FD(perf_pmu_ddrs, i, j);
+		if (fd > 0) {
+			uint64_t counter_val = perf_event_pmu_read(fd);
+			const char *type_name = PMU_GET_TYPE_NAME(perf_pmu_ddrs, i);
+			const char *event_name = PMU_GET_EVENT_NAME(perf_pmu_ddrs, j, j);
+
+			memset(buf, 0, sizeof(buf));
+			snprintf(buf, sizeof(buf), "%s/%s", type_name, event_name);
+
+			size_t buf_len = strlen(buf);
+			double display_value = (double) counter_val * 16 / (1024 * 1024);
+			
+			/* how much we need the remove from default value */
+			size_t adjust_float = 0;
+
+			if (display_value > 10.0f)
+				adjust_float++;
+			if (display_value > 100.0f)
+				adjust_float++;
+
+			if (p == 0)
+				gtop_display_white_space(buf_len - 4 - adjust_float);
+			else
+				/* +3 is %s/%s from buf, but we need to add this
+				 * only from the second hence p > 0
+				 */
+				gtop_display_white_space(buf_len - 4 + 3 - adjust_float);
+
+			/* 0.123 -> 4 chars */
+			fprintf(stdout, "%.2f", display_value);
+
+			perf_event_pmu_reset(fd);
+
+			p++;
+		}
+	}
+	fprintf(stdout, "\n");
+}
+
+static void
 gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 {
 	struct debugfs_client clients;
@@ -654,6 +796,8 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 	if (debugfs_get_contexts(&clients, NULL) < 0) {
 		return;
 	}
+
+	gtop_display_perf_pmus();
 
 	/* draw with bold */
 	fprintf(stdout, "\n%s", underlined_color);
@@ -1917,6 +2061,7 @@ int main(int argc, char *argv[])
 	perf_profiler_stop(dev);
 	perf_profiler_disable(dev);
 	perf_exit(dev);
+	gtop_disable_pmus();
 
 	tty_reset(&tty_old);
 	return 0;

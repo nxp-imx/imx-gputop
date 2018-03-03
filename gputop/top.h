@@ -73,6 +73,7 @@
 #define XSTR(x)	STR(x)
 
 #define KERNEL_MISMATCH_ERR	"Kernel mismatch"
+#define ARRAY_SIZE(a)		(sizeof(a)/sizeof(a[0]))
 
 enum page {
 	PAGE_SHOW_CLIENTS,
@@ -183,5 +184,36 @@ struct gtop_hw_drv_info {
 	/* used to determine if we got the data and not to retrieve it every time */
 	bool found;
 };
+
+
+#define PERF_DDR_PMUS_COUNT	2
+
+struct perf_pmu_event_type {
+	int fd;
+	const char *name;
+};
+
+struct perf_pmu_ddr {
+	const char *name;
+	struct perf_pmu_event_type events[PERF_DDR_PMUS_COUNT];
+};
+
+
+#define PMU_GET_FD(pmu, i, j)		\
+	pmu[i].events[j].fd
+
+#define PMU_GET_EVENT_NAME(pmu, i, j)	\
+	pmu[i].events[j].name
+
+#define PMU_GET_TYPE_NAME(pmu, i)	\
+	pmu[i].name
+
+#define for_each_pmu(pmus, i)		\
+	for (i = 0; i < ARRAY_SIZE(pmus); i++)
+
+#define for_all_pmus(pmus, i, j)	\
+	for_each_pmu(pmus, i)		\
+		for_each_pmu(pmus[i].events, j)
+
 
 #endif /* end __TOP_H */
