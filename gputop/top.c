@@ -732,7 +732,7 @@ gtop_display_perf_pmus(void)
 		}
 	}
 
-	fprintf(stdout, "%s\n", regular_color);
+	fprintf(stdout, "(MB)%s\n", regular_color);
 	fprintf(stdout, "%5s", "");
 	
 	char buf[PATH_MAX];
@@ -759,6 +759,8 @@ gtop_display_perf_pmus(void)
 			if (display_value > 10.0f)
 				adjust_float++;
 			if (display_value > 100.0f)
+				adjust_float++;
+			if (display_value > 1000.0f)
 				adjust_float++;
 
 			if (p == 0)
