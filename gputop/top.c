@@ -44,7 +44,10 @@
 #include <gpuperfcnt/gpuperfcnt.h>
 #include <gpuperfcnt/gpuperfcnt_vivante.h>
 #include <gpuperfcnt/gpuperfcnt_log.h>
+
+#ifdef HAVE_DDR_PERF
 #include <ddrperfcnt/ddr-perf.h>
+#endif
 
 #include "states.c"
 #include "top.h"
@@ -133,12 +136,14 @@ struct dma_table dma_tables[] = {
 
 #define NUM_DMA_TABLES (sizeof(dma_tables) / sizeof(dma_tables[0]))
 
+#ifdef HAVE_DDR_PERF
 /* what DDR pmus we want to read, if you want to add more you also need
  * to modify PERF_DDR_PMUS_COUNT  */
 static struct perf_pmu_ddr perf_pmu_ddrs[] = {
 	{ "ddr0", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
 	{ "ddr1", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
 };
+#endif
 
 static uint64_t
 get_ns_time(void)
@@ -641,6 +646,7 @@ gtop_display_vid_mem_usage(struct perf_device *dev, struct gtop_hw_drv_info *gin
 	debugfs_free_clients(&clients);
 }
 
+#ifdef HAVE_DDR_PERF
 static void
 gtop_configure_pmus(void)
 {
@@ -773,6 +779,7 @@ gtop_display_perf_pmus(void)
 	}
 	fprintf(stdout, "\n");
 }
+#endif
 
 static void
 gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
@@ -797,7 +804,9 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 		return;
 	}
 
+#ifdef HAVE_DDR_PERF
 	gtop_display_perf_pmus();
+#endif
 
 	/* draw with bold */
 	fprintf(stdout, "\n%s", underlined_color);
@@ -2061,7 +2070,9 @@ int main(int argc, char *argv[])
 	perf_profiler_stop(dev);
 	perf_profiler_disable(dev);
 	perf_exit(dev);
+#ifdef HAVE_DDR_PERF
 	gtop_disable_pmus();
+#endif
 
 	tty_reset(&tty_old);
 	return 0;

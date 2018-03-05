@@ -5,6 +5,9 @@ set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(GNUInstallDirs)
 
+#include(CheckIncludeFiles)
+#CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/gputop/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gputop/config.h)
+
 option (ENABLE_DEBUG    "Enable debug." OFF)
 option (ENABLE_SHARED	"Build against shared library." OFF)
 option (ENABLE_STATIC	"Build agasint static library." OFF)
@@ -25,6 +28,12 @@ if (EXISTS ${GPUPERFCNT_INCLUDE_PATH})
 	if (GPUPERFCNT_INCLUDE_DIR)
 		message(STATUS "Found GPUPERFCNT_INCLUDE_PATH @ ${GPUPERFCNT_INCLUDE_PATH}")
 		set(GPUPERFCNT_INC_DIR_FOUND 1)
+
+		find_path(GPUPERFCNT_INCLUDE_DDR_PATH_DIR ddrperfcnt PATHS ${GPUPERFCNT_INCLUDE_PATH} NO_CMAKE_FIND_ROOT_PATH)
+		if (GPUPERFCNT_INCLUDE_DDR_PATH_DIR)
+			message(STATUS "Found DDR PERFCNT")
+			set(GPUPERFCNT_FOUND_DDR 1)
+		endif()
 	else()
 		message(FATAL_ERROR "Could not found include headers for libgpuperfcnt")
 	endif()
@@ -60,6 +69,11 @@ endif()
 
 add_definitions(-D_POSIX_C_SOURCE=200809L)
 add_definitions(-DGIT_SHA=${GIT_SHA_VERSION})
+
+# seems that CHECK_INCLUDE_FILES doesn't really work for external libs...:/
+if (GPUPERFCNT_FOUND_DDR)
+	add_definitions(-DHAVE_DDR_PERF=${GPUPERFCNT_FOUND_DDR})
+endif()
 
 if (ENABLE_DEBUG)
 	add_definitions(-DUSE_DEBUG=1)
