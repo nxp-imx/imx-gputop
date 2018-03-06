@@ -79,6 +79,7 @@ static struct profiler_state profiler_state = {
 #endif
 
 struct gtop_hw_drv_info gtop_info;
+static struct perf_version perf_version;
 
 /* the  # of samples to take in a period of time  */
 static int samples = 100;
@@ -527,9 +528,11 @@ gtop_display_drv_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 	struct perf_hw_info *hw_info_iter = NULL;
 
 	/* print info about driver */
-	fprintf(stdout, "Galcore version:%d.%d.%d.%d\n",
+	fprintf(stdout, "Galcore version:%d.%d.%d.%d, ",
 			gtop_info.drv_info.major, gtop_info.drv_info.minor,
 			gtop_info.drv_info.patch, gtop_info.drv_info.build);
+	fprintf(stdout, "gpuperfcnt:%s, %s\n",
+			perf_version.git_version, perf_version.version);
 
 	fprintf(stdout, "HW:");
 	list_for_each(hw_info_iter, ginfo->hw_info.head) {
@@ -1904,7 +1907,9 @@ void help(void)
 static void
 show_version(void)
 {
-	fprintf(stdout, "GIT: %s, Version: %s\n", git_version, version);
+	fprintf(stdout, "gputop GIT: %s, Version: %s\n", git_version, version);
+	fprintf(stdout, "libgpuperfcnt GIT: %s, Version: %s\n",
+			perf_version.git_version, perf_version.version);
 	exit(EXIT_SUCCESS);
 }
 
@@ -2010,6 +2015,7 @@ int main(int argc, char *argv[])
 
 
 	memset(&gtop_info, 0, sizeof(struct gtop_hw_drv_info));
+	perf_version = perf_get_library_version();
 
 	parse_args(argc, argv);
 	install_sighandler();
@@ -2041,6 +2047,9 @@ int main(int argc, char *argv[])
 				gtop_info.drv_info.minor,
 				gtop_info.drv_info.patch,
 				gtop_info.drv_info.build);
+			fprintf(stderr, "Library version: GIT: %s, VERSION: %s\n",
+				perf_version.git_version,
+				perf_version.version);
 			gtop_wait_for_keyboard(NULL);
 		} else {
 			fprintf(stderr, "Failed to open driver connection: %s\n",
