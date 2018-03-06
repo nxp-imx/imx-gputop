@@ -1353,7 +1353,8 @@ gtop_wait_for_keyboard(const char *str)
 	int dummy;
 
 	fprintf(stdout, "%s\n", clear_screen);
-	fprintf(stdout, "%s", str);
+	if (str)
+		fprintf(stdout, "%s", str);
 
 	fprintf(stdout, "\n Type any key to resume...\n");
 
@@ -2022,15 +2023,25 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+
 	err = perf_open(VIV_HW_3D, dev);
+
+	/* get driver, hw info */
+	gtop_get_gtop_info(dev, &gtop_info);
+
 	if (err < 0) {
 		/*
 		 * error retrieval is driver dependent so for VSI/Vivante
 		 * we check directly for string err
 		 */
 		if (err == ERR_KERNEL_MISMATCH) {
-			fprintf(stderr, "Warning: ");
-			gtop_wait_for_keyboard(perf_get_last_error(dev));
+			fprintf(stderr, "Warning: Kernel mismatch");
+			fprintf(stderr, "Driver version MAJOR: %d, MINOR: %d, PATCH: %d, BUILD: %d\n",
+				gtop_info.drv_info.major,
+				gtop_info.drv_info.minor,
+				gtop_info.drv_info.patch,
+				gtop_info.drv_info.build);
+			gtop_wait_for_keyboard(NULL);
 		} else {
 			fprintf(stderr, "Failed to open driver connection: %s\n",
 					perf_get_last_error(dev));
@@ -2039,8 +2050,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/* get driver, hw info */
-	gtop_get_gtop_info(dev, &gtop_info);
 
 	if (FLAG_IS_SET(flags, FLAG_CONTEXT)) {
 		/* 
