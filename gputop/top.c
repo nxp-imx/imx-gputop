@@ -2028,8 +2028,8 @@ int main(int argc, char *argv[])
 		 * error retrieval is driver dependent so for VSI/Vivante
 		 * we check directly for string err
 		 */
-		if (!strncmp(perf_get_last_error(dev), KERNEL_MISMATCH_ERR, strlen(KERNEL_MISMATCH_ERR))) {
-			fprintf(stderr, "Warning!\n");
+		if (err == ERR_KERNEL_MISMATCH) {
+			fprintf(stderr, "Warning: ");
 			gtop_wait_for_keyboard(perf_get_last_error(dev));
 		} else {
 			fprintf(stderr, "Failed to open driver connection: %s\n",

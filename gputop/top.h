@@ -72,7 +72,19 @@
 #define STR(x)	#x
 #define XSTR(x)	STR(x)
 
-#define KERNEL_MISMATCH_ERR	"Kernel mismatch"
+/* do note these are encoded for VSI */
+enum err_code {
+        ERR_NO_ERROR = 0,
+        ERR_NO_ACCESS = -1,
+        ERR_NO_GAL_DEVICE = -2,
+        ERR_KERNEL_MISMATCH = -3,
+        ERR_GET_BASE_ADDRESS = -4,
+        ERR_GET_CHIP_IDENTITY = -5,
+        ERR_GET_CHIP_INFO = -6,
+        ERR_GET_MEMORY_INFO = -7,
+        ERR_GET_DEBUGFS_INFO = -8,
+};
+
 #define ARRAY_SIZE(a)		(sizeof(a)/sizeof(a[0]))
 
 enum page {
