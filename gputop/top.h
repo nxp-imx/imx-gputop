@@ -72,6 +72,9 @@
 #define STR(x)	#x
 #define XSTR(x)	STR(x)
 
+#define DELAY_SECS	1
+#define DELAY_NSECS	0
+
 /* do note these are encoded for VSI */
 enum err_code {
         ERR_NO_ERROR = 0,
@@ -94,6 +97,7 @@ enum page {
 	PAGE_COUNTER_PART2,	/* counters part 2 */
 	PAGE_DMA,		/* dma */
 	PAGE_OCCUPANCY,		/* occupancy */
+	PAGE_DDR_PERF,		/* DDR PMUs */
 	
 	PAGE_NO,
 };
@@ -105,12 +109,13 @@ enum display_mode {
 	MODE_PERF_COUNTER_PART2,
 	MODE_PERF_DMA,
 	MODE_PERF_OCCUPANCY,
+	MODE_PERF_DDR,
 
 	MODE_PERF_NO,
 };
 
 enum display_samples {
-	SAMPLES_DIFF = 0,
+	SAMPLES_TIME = 0,
 	SAMPLES_AVERAGE,
 	SAMPLES_MIN,
 	SAMPLES_MAX,
@@ -126,6 +131,7 @@ enum flags_type {
 	FLAG_SHOW_CONTEXTS = 6,
 	FLAG_SHOW_BATCH_CONTEXTS = 7,
 	FLAG_SHOW_BATCH_PERF = 8,
+	FLAG_IGNORE_START_ERRORS,
 };
 
 /* 

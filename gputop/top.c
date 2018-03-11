@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <ctype.h>
 #include <assert.h>
 
 #include <termios.h>
@@ -66,6 +67,8 @@ static int volatile resized = 0;
 /* for/not reading counters */
 static bool paused = false;
 
+static int perf_ddr_enabled = 0;
+
 #ifdef __linux__
 static struct profiler_state profiler_state = {
 	.enabled = false,
@@ -87,7 +90,7 @@ static int samples = 100;
 /* current mode */
 enum display_mode mode = MODE_PERF_SHOW_CLIENTS;
 /* current display mode for counters */
-enum display_samples samples_mode = SAMPLES_DIFF;
+enum display_samples samples_mode = SAMPLES_TIME;
 /* curr page we're at */
 uint8_t curr_page = PAGE_SHOW_CLIENTS;
 
@@ -124,6 +127,7 @@ static struct p_page program_pages[] = {
 	[PAGE_DMA]		= { PAGE_DMA, "DMA engines" },
 	[PAGE_OCCUPANCY]	= { PAGE_OCCUPANCY, "Occupancy" },
 	[PAGE_VID_MEM_USAGE]	= { PAGE_VID_MEM_USAGE, "VidMem" },
+	[PAGE_DDR_PERF]		= { PAGE_DDR_PERF, "DDR" },
 };
 
 struct dma_table dma_tables[] = {
@@ -243,8 +247,8 @@ get_input_char(void)
 	struct timespec ts = {};
 
 	/* one second time out */
-	ts.tv_sec = 1;
-	ts.tv_nsec = 0;
+	ts.tv_sec = DELAY_SECS;
+	ts.tv_nsec = DELAY_NSECS;
 
 	FD_ZERO(&fds);
 	FD_SET(STDIN_FILENO, &fds);
@@ -264,7 +268,7 @@ get_input_char(void)
 static void
 delay(void)
 {
-	nanosleep(&(struct timespec) { .tv_sec = 1, .tv_nsec = 0 }, NULL);
+	nanosleep(&(struct timespec) { .tv_sec = DELAY_SECS, .tv_nsec = DELAY_NSECS }, NULL);
 }
 
 static bool
@@ -294,7 +298,7 @@ gtop_display_interactive_counters(const struct gtop_data *gtop,
 	struct perf_counter_info *info;
 
 	switch (samples_mode) {
-	case SAMPLES_DIFF:
+	case SAMPLES_TIME:
 		format_number(num, sizeof(num), gtop->events_per_sample[id]);
 		break;
 	case SAMPLES_MIN:
@@ -375,10 +379,6 @@ gtop_display_interactive_mode_occupancy(const struct vivante_gpu_state *st)
 	fprintf(stdout, " IDLE0%28s %.2f%%\n", "", cycles_idle_percent_core0);
 	fprintf(stdout, " USAGE%28s %.2f%%\n", "", 100.0f - cycles_idle_percent_core0);
 
-	/*
-	 * CAVEAT: When specifying VIV_MGPU_AFFINITY to 1:0 or 0:0 the driver will
-	 * schedule on first core always!
-	 */
 	if (gtop_info.cores[0] > 1) {
 		double cycles_idle_percent_core1;
 
@@ -712,12 +712,11 @@ gtop_display_white_space(size_t amount)
 static void
 gtop_display_perf_pmus(void)
 {
-	static int enabled = 0;
 	unsigned int i, j;
-	if (!enabled) {
+	if (!perf_ddr_enabled) {
 		gtop_configure_pmus();
 		gtop_enable_pmus();
-		enabled = 1;
+		perf_ddr_enabled = 1;
 	}
 
 	fprintf(stdout, "\n");
@@ -784,6 +783,58 @@ gtop_display_perf_pmus(void)
 	}
 	fprintf(stdout, "\n");
 }
+
+static void
+gtop_display_perf_pmus_short(void)
+{
+	unsigned int i, j;
+	if (!perf_ddr_enabled) {
+		gtop_configure_pmus();
+		gtop_enable_pmus();
+		perf_ddr_enabled = 1;
+	}
+
+	fprintf(stdout, "\n");
+
+	for_each_pmu(perf_pmu_ddrs, i) {
+		char type_name_upper[1024];
+		const char *type_name = PMU_GET_TYPE_NAME(perf_pmu_ddrs, i);
+
+		memset(type_name_upper, 0, 1024);
+
+		const char *start = type_name;
+		int index = 0;
+
+		while (start && *start) {
+			assert(index < 1024);
+			type_name_upper[index] = toupper(*start);
+			start++;
+			index++;
+		}
+		type_name_upper[index] = '\0';
+
+		fprintf(stdout, "%s", bold_color);
+		fprintf(stdout, "%s: ", type_name_upper);
+		fprintf(stdout, "%s", regular_color);
+
+		for_each_pmu(perf_pmu_ddrs[i].events, j) {
+			int fd = PMU_GET_FD(perf_pmu_ddrs, i, j);
+			if (fd > 0) {
+				const char *event_name = PMU_GET_EVENT_NAME(perf_pmu_ddrs, i, j);
+				uint64_t counter_val = perf_event_pmu_read(fd);
+				double display_value = (double) counter_val * 16 / (1024 * 1024);
+
+				fprintf(stdout, "%.1s:%.2f", event_name, display_value);
+				if (j < (ARRAY_SIZE(perf_pmu_ddrs[i].events) - 1))
+						fprintf(stdout, ",");
+				perf_event_pmu_reset(fd);
+			}
+		}
+		fprintf(stdout, "\n");
+	}
+
+	fprintf(stdout, "\n");
+}
 #endif
 
 static void
@@ -810,11 +861,11 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 	}
 
 #ifdef HAVE_DDR_PERF
-	gtop_display_perf_pmus();
+	gtop_display_perf_pmus_short();
 #endif
 
 	/* draw with bold */
-	fprintf(stdout, "\n%s", underlined_color);
+	fprintf(stdout, "%s", underlined_color);
 
 	if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS)) {
 		fprintf(stdout, " %7s %9s %10s %10s %12s %10s %16s %14s\n",
@@ -919,7 +970,6 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 			"", "", "", "", (contigousSize - client_total.reserved) / (1024));
 skip:
 #endif
-
 	/* free all resources */
 	debugfs_free_clients(&clients);
 }
@@ -958,7 +1008,12 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 	else
 		fprintf(stdout, "%s | %u / %u ", program_pages[curr_page].page_desc, curr_page, (PAGE_NO - 1));
 
-	fprintf(stdout, " (sample_mode: %s) ", display_samples_names[samples_mode]);
+	fprintf(stdout, " (sample_mode: %s", display_samples_names[samples_mode]);
+	if (samples_mode == SAMPLES_TIME) {
+		fprintf(stdout, " - %d.%d secs)", DELAY_SECS, DELAY_NSECS);
+	} else {
+		fprintf(stdout, ")");
+	}
 
 	if (selected_client && selected_client->name) {
 		fprintf(stdout, "(PID: %u, Program: %s, CTX = %u)\n",
@@ -987,6 +1042,9 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 		case MODE_PERF_OCCUPANCY:
 			gtop_display_interactive_mode_occupancy(&gtop.st);
 			break;
+		case MODE_PERF_DDR:
+			gtop_display_perf_pmus();
+			break;
 		default:
 			dprintf("No valid page specified in interactive mode\n");
 			exit(EXIT_FAILURE);
@@ -1011,6 +1069,9 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 			break;
 		case PAGE_OCCUPANCY:
 			gtop_display_interactive_mode_occupancy(&gtop.st);
+			break;
+		case PAGE_DDR_PERF:
+			gtop_display_perf_pmus();
 			break;
 		default:
 			dprintf("No valid mode specified in interactive mode\n");
@@ -1351,11 +1412,12 @@ gtop_compute_perf(struct perf_device *dev, struct gtop_data *gtop_d)
 }
 
 static void
-gtop_wait_for_keyboard(const char *str)
+gtop_wait_for_keyboard(const char *str, bool clean_screen)
 {
 	int dummy;
 
-	fprintf(stdout, "%s\n", clear_screen);
+	if (clean_screen)
+		fprintf(stdout, "%s\n", clear_screen);
 	if (str)
 		fprintf(stdout, "%s", str);
 
@@ -1454,7 +1516,7 @@ gtop_get_ctx_from_keyboard(struct perf_device *dev)
 	/* if we don't support this board */
 	if (gtop_is_chip_model(0x7000, dev)) {
 		tty_init(&tty_old);
-		gtop_wait_for_keyboard("GC7000 not supported at the moment!\n");
+		gtop_wait_for_keyboard("GC7000 not supported at the moment!\n", true);
 		tty_reset(&tty_old);
 		goto out;
 	}
@@ -1529,6 +1591,7 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 				break;
 			case MODE_PERF_VID_MEM_USAGE:
 			case MODE_PERF_SHOW_CLIENTS:
+			case MODE_PERF_DDR:
 				break;
 			default:
 				dprintf("Invalid mode specified\n");
@@ -1550,6 +1613,7 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 				break;
 			case MODE_PERF_VID_MEM_USAGE:
 			case MODE_PERF_SHOW_CLIENTS:
+			case MODE_PERF_DDR:
 				break;
 			default:
 				dprintf("Invalid page view specified!\n");
@@ -1594,7 +1658,7 @@ gtop_display_interactive_help(void)
 
 	fprintf(stdout, "%s\n", clear_screen);
 
-	fprintf(stdout, " Arrows (<-|->) to navigate between pages         | Use 0-4 to switch directly\n");
+	fprintf(stdout, " Arrows (<-|->) to navigate between pages         | Use 0-6 to switch directly\n");
 	fprintf(stdout, " Use SPACE to specify a context (for PART1|PART2) | Use p to pause display\n");
 	fprintf(stdout, " Use x to show application's GPU id contexts      | Use q<ESC> to quit\n");
 	fprintf(stdout, " Use r to change between TIME/MIN/AVERAGE/MAX values of counters\n");
@@ -1681,7 +1745,7 @@ gtop_check_keyboard(struct perf_device *dev)
 					perf_context_set(selected_ctx, dev);
 				}
 			} else {
-				gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n");
+				gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n", true);
 				curr_page = prev_page;
 				break;
 			}
@@ -1709,7 +1773,7 @@ gtop_check_keyboard(struct perf_device *dev)
 					perf_context_set(selected_ctx, dev);
 				}
 			} else {
-				gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n");
+				gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n", true);
 				curr_page = prev_page;
 				break;
 			}
@@ -1736,7 +1800,7 @@ gtop_check_keyboard(struct perf_device *dev)
 				perf_context_set(selected_ctx, dev);
 			}
 		} else {
-			gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n");
+			gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n", true);
 			break;
 		}
 
@@ -1757,7 +1821,7 @@ gtop_check_keyboard(struct perf_device *dev)
 				perf_context_set(selected_ctx, dev);
 			}
 		} else {
-			gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n");
+			gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n", true);
 			break;
 		}
 		curr_page = PAGE_COUNTER_PART2;
@@ -1767,6 +1831,9 @@ gtop_check_keyboard(struct perf_device *dev)
 		break;
 	case KEY_5:
 		curr_page = PAGE_OCCUPANCY;
+		break;
+	case KEY_6:
+		curr_page = PAGE_DDR_PERF;
 		break;
 	case KEY_X:
 		if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS))
@@ -1797,6 +1864,13 @@ gtop_check_keyboard(struct perf_device *dev)
 		gtop_disable_profiling(dev);
 		perf_profiler_stop(dev);
 		profiler_state.enabled = false;
+	}
+
+	/* disable reading DDR perf PMUs */
+	if ((curr_page != PAGE_SHOW_CLIENTS ||
+	     curr_page != PAGE_DDR_PERF) && perf_ddr_enabled) {
+		gtop_disable_pmus();
+		perf_ddr_enabled = 0;
 	}
 
 	return 0;
@@ -1892,6 +1966,7 @@ void help(void)
 	dprintf("                occupancy   Show occupancy (non-idle) states of modules\n");
 	dprintf("                dma         DMA engine states\n");
 	dprintf("                vidmem	    Additional video memory information\n");
+	dprintf("                ddr	    Show Kernel PMUs related to memory bandwidth\n");
 
 	dprintf("  -c <ctx>      Specify context to track\n");
 	dprintf("  -b            Show batch (instantaneous of requested mode)\n");
@@ -1918,7 +1993,7 @@ parse_args(int argc, char **argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "m:hc:xbvf")) != -1) {
+	while ((c = getopt(argc, argv, "m:hc:xbvfi")) != -1) {
 		switch (c) {
 		case 'm':
 			SET_FLAG(flags, FLAG_MODE);
@@ -1935,6 +2010,8 @@ parse_args(int argc, char **argv)
 				mode = MODE_PERF_DMA;
 			} else if (!strncmp(optarg, "vidmem", strlen("vidmem"))) {
 				mode = MODE_PERF_VID_MEM_USAGE;
+			} else if (!strncmp(optarg, "ddr", strlen("ddr"))) {
+				mode = MODE_PERF_DDR;
 			} else {
 				dprintf("Unknown mode %s\n", optarg);
 				help();
@@ -1955,6 +2032,9 @@ parse_args(int argc, char **argv)
 			break;
 		case 'v':
 			show_version();
+			break;
+		case 'i':
+			SET_FLAG(flags, FLAG_IGNORE_START_ERRORS);
 			break;
 		case 'h':
 		default:
@@ -2036,21 +2116,19 @@ int main(int argc, char *argv[])
 	gtop_get_gtop_info(dev, &gtop_info);
 
 	if (err < 0) {
-		/*
-		 * error retrieval is driver dependent so for VSI/Vivante
-		 * we check directly for string err
-		 */
 		if (err == ERR_KERNEL_MISMATCH) {
-			fprintf(stderr, "Warning: Kernel mismatch");
-			fprintf(stderr, "Driver version MAJOR: %d, MINOR: %d, PATCH: %d, BUILD: %d\n",
+		    if (!FLAG_IS_SET(flags, FLAG_IGNORE_START_ERRORS)) {
+			fprintf(stdout, "Warning: Kernel mismatch, ");
+			fprintf(stdout, "Driver version %d.%d.%d.%d\n",
 				gtop_info.drv_info.major,
 				gtop_info.drv_info.minor,
 				gtop_info.drv_info.patch,
 				gtop_info.drv_info.build);
-			fprintf(stderr, "Library version: GIT: %s, VERSION: %s\n",
+			fprintf(stdout, "Library version: GIT: %s, VERSION: %s\n",
 				perf_version.git_version,
 				perf_version.version);
-			gtop_wait_for_keyboard(NULL);
+			gtop_wait_for_keyboard(NULL, false);
+		    }
 		} else {
 			fprintf(stderr, "Failed to open driver connection: %s\n",
 					perf_get_last_error(dev));
@@ -2058,7 +2136,6 @@ int main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		}
 	}
-
 
 	if (FLAG_IS_SET(flags, FLAG_CONTEXT)) {
 		/* 
