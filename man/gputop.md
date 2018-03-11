@@ -1,18 +1,19 @@
 % GPUTOP(8)
 % Marius Vlad <marius-cristian.vlad@nxp.com>
-% Sept 5, 2017
+% March 11, 2018
 
 # NAME
 
 **gputop** --  Monitor GPU clients memory, hardware counters, occupancy state
-and load on DMA engines.
+load on DMA engines, VideoMemory and and DDR memory bandwidth.
 
 # SYNOPSIS
 
 **gputop** [options]
 
 **gputop** -m [mode] -- Where mode can be: **mem**, **counter_1**, **counter_2**,
-**occupancy** and **dma**. Use this option to start **gputop** directly in a mode that you're interested on. 
+**occupancy**, **dma**, **vidmem** and **ddr**.
+Use this option to start **gputop** directly in a mode that you're interested on.
 For **counter_1** and **counter_2** a context will be needed.
 See *NOTES* section why this is necessary.
 
@@ -24,6 +25,8 @@ only take an instantaneous sample.
 
 **gputop** -x -- useful to display contexts when used with ``-b''
 
+**gputop** -i -- ignore warnings about kernel mismatch
+
 **gputop** -h -- display usage and help
 
 ## Interactive mode
@@ -32,7 +35,7 @@ Normally, when starting up, **gputop**, starts in interactive mode. The
 following are a list of useful commands:
 
 * 'h' -- display help page 
-* '0-4'/Left-Right arrows -- switch between viewing pages
+* '0-6'/Left-Right arrows -- switch between viewing pages
 * 'x' -- display application contexts
 * 'SPACE' -- select a context that you want to track. Useful for reading **counter_1** and
 **counter_2** values.

@@ -67,7 +67,9 @@ static int volatile resized = 0;
 /* for/not reading counters */
 static bool paused = false;
 
+#ifdef HAVE_DDR_PERF
 static int perf_ddr_enabled = 0;
+#endif
 
 #ifdef __linux__
 static struct profiler_state profiler_state = {
@@ -1866,13 +1868,14 @@ gtop_check_keyboard(struct perf_device *dev)
 		profiler_state.enabled = false;
 	}
 
+#ifdef HAVE_DDR_PERF
 	/* disable reading DDR perf PMUs */
 	if ((curr_page != PAGE_SHOW_CLIENTS ||
 	     curr_page != PAGE_DDR_PERF) && perf_ddr_enabled) {
 		gtop_disable_pmus();
 		perf_ddr_enabled = 0;
 	}
-
+#endif
 	return 0;
 }
 
