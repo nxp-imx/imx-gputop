@@ -979,7 +979,7 @@ skip:
 static void
 gtop_check_profiler_state(void)
 {
-	/* verify that we have profiling enabled otherwise display the memory page */
+	/* verify that we have profiling enabled */
 	if (!profiler_state.enabled) {
 		switch (profiler_state.state) {
 		case -1:
@@ -1199,15 +1199,7 @@ gtop_compute_mode_dma(struct perf_device *dev, struct vivante_gpu_state *st)
 	int err;
 
 
-	/*
-	 * 6.2.4 doesn't need enabling the profiler, but for 6.2.3, 6.2.2
-	 * we still need it.
-	 */
-	if (!profiler_state.enabled && 
-	     (gtop_info.drv_info.patch < 4 &&
-	      gtop_info.drv_info.major == 6 &&
-	      gtop_info.drv_info.minor == 2)) {
-
+	if (!profiler_state.enabled) {
 		if (perf_check_profiler(&profiler_state.state, dev) < 0)
 			return -1;
 
@@ -1249,10 +1241,7 @@ gtop_compute_mode_occupancy(struct perf_device *dev, struct vivante_gpu_state *s
 	int err;
 	uint32_t idle_reg_addr = GC_TOTAL_IDLE_CYCLES;
 
-	if (!profiler_state.enabled &&
-	     (gtop_info.drv_info.patch < 4 &&
-	      gtop_info.drv_info.major == 6 &&
-	      gtop_info.drv_info.minor == 2)) {
+	if (!profiler_state.enabled) {
 
 		if (perf_check_profiler(&profiler_state.state, dev) < 0)
 			return -1;
