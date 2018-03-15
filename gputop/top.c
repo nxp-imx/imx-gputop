@@ -129,7 +129,9 @@ static struct p_page program_pages[] = {
 	[PAGE_DMA]		= { PAGE_DMA, "DMA engines" },
 	[PAGE_OCCUPANCY]	= { PAGE_OCCUPANCY, "Occupancy" },
 	[PAGE_VID_MEM_USAGE]	= { PAGE_VID_MEM_USAGE, "VidMem" },
+#ifdef HAVE_DDR_PERF
 	[PAGE_DDR_PERF]		= { PAGE_DDR_PERF, "DDR" },
+#endif
 };
 
 struct dma_table dma_tables[] = {
@@ -1044,9 +1046,11 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 		case MODE_PERF_OCCUPANCY:
 			gtop_display_interactive_mode_occupancy(&gtop.st);
 			break;
+#ifdef HAVE_DDR_PERF
 		case MODE_PERF_DDR:
 			gtop_display_perf_pmus();
 			break;
+#endif
 		default:
 			dprintf("No valid page specified in interactive mode\n");
 			exit(EXIT_FAILURE);
@@ -1072,9 +1076,11 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 		case PAGE_OCCUPANCY:
 			gtop_display_interactive_mode_occupancy(&gtop.st);
 			break;
+#ifdef HAVE_DDR_PERF
 		case PAGE_DDR_PERF:
 			gtop_display_perf_pmus();
 			break;
+#endif
 		default:
 			dprintf("No valid mode specified in interactive mode\n");
 			exit(EXIT_FAILURE);
@@ -1582,8 +1588,10 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 				break;
 			case MODE_PERF_VID_MEM_USAGE:
 			case MODE_PERF_SHOW_CLIENTS:
+#ifdef HAVE_DDR_PERF
 			case MODE_PERF_DDR:
 				break;
+#endif
 			default:
 				dprintf("Invalid mode specified\n");
 				exit(EXIT_FAILURE);
@@ -1604,8 +1612,10 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 				break;
 			case MODE_PERF_VID_MEM_USAGE:
 			case MODE_PERF_SHOW_CLIENTS:
+#ifdef HAVE_DDR_PERF
 			case MODE_PERF_DDR:
 				break;
+#endif
 			default:
 				dprintf("Invalid page view specified!\n");
 				exit(EXIT_FAILURE);
@@ -1649,7 +1659,11 @@ gtop_display_interactive_help(void)
 
 	fprintf(stdout, "%s\n", clear_screen);
 
+#ifdef HAVE_DDR_PERF
 	fprintf(stdout, " Arrows (<-|->) to navigate between pages         | Use 0-6 to switch directly\n");
+#else
+	fprintf(stdout, " Arrows (<-|->) to navigate between pages         | Use 0-5 to switch directly\n");
+#endif
 	fprintf(stdout, " Use SPACE to specify a context (for PART1|PART2) | Use p to pause display\n");
 	fprintf(stdout, " Use x to show application's GPU id contexts      | Use q<ESC> to quit\n");
 	fprintf(stdout, " Use r to change between TIME/MIN/AVERAGE/MAX values of counters\n");
@@ -1823,9 +1837,11 @@ gtop_check_keyboard(struct perf_device *dev)
 	case KEY_5:
 		curr_page = PAGE_OCCUPANCY;
 		break;
+#ifdef HAVE_DDR_PERF
 	case KEY_6:
 		curr_page = PAGE_DDR_PERF;
 		break;
+#endif
 	case KEY_X:
 		if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS))
 			REMOVE_FLAG(flags, FLAG_SHOW_CONTEXTS);
@@ -2002,8 +2018,10 @@ parse_args(int argc, char **argv)
 				mode = MODE_PERF_DMA;
 			} else if (!strncmp(optarg, "vidmem", strlen("vidmem"))) {
 				mode = MODE_PERF_VID_MEM_USAGE;
+#ifdef HAVE_DDR_PERF
 			} else if (!strncmp(optarg, "ddr", strlen("ddr"))) {
 				mode = MODE_PERF_DDR;
+#endif
 			} else {
 				dprintf("Unknown mode %s\n", optarg);
 				help();
