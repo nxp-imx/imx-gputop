@@ -52,7 +52,28 @@ else()
 		message(STATUS "libgpuperfcnt found")
 		include_directories(${GPUPERFCNT_INCLUDE_DIR})
 	else()
-		message(FATAL_ERROR "libgpuperfcnt not found")
+		message(STATUS "Using pkg-config to find libgpuperfcnt")
+
+		find_package(PkgConfig)
+		pkg_check_modules(LIBGPUPERFCNT REQUIRED libgpuperfcnt)
+		message(STATUS "Using ${LIBGPUPERFCNT_INCLUDE_DIRS}")
+		message(STATUS "Using ${LIBGPUPERFCNT_LIBRARY_DIRS}")
+		message(STATUS "Using ${LIBGPUPERFCNT_INCLUDEDIR}")
+
+		set(GPUPERFCNT_INCLUDE_PATH ${LIBGPUPERFCNT_INCLUDE_DIRS})
+		set(GPUPERFCNT_LIB_PATH ${LIBGPUPERFCNT_LIBRARY_DIRS})
+		# now try to find ddrperf as well
+		find_path(GPUPERFCNT_INCLUDE_DDR_PATH_DIR
+				NAMES "ddr-perf.h"
+				PATHS "${LIBGPUPERFCNT_INCLUDEDIR}/ddrperfcnt"
+				NO_CMAKE_FIND_ROOT_PATH
+				)
+		if (GPUPERFCNT_INCLUDE_DDR_PATH_DIR)
+			message(STATUS "Found ddr-perf.h header")
+			set(GPUPERFCNT_FOUND_DDR ${GPUPERFCNT_INCLUDE_DDR_PATH_DIR})
+		else()
+			message(STATUS "ddr-perf.h header not included")
+		endif()
 	endif()
 endif()
 

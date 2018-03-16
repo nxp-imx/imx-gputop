@@ -36,8 +36,6 @@ if (GPUPERFCNT_INCLUDE_DIR AND GPUPERFCNT_LIBRARY_DIR)
 		message(STATUS "Found DDR PERF")
 		set(GPUPERFCNT_FOUND_DDR)
 	endif()
-else()
-	message(STATUS "NOK: Did not found libgpuperfcnt library...")
 endif ()
 
 mark_as_advanced (
