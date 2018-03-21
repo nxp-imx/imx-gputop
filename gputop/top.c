@@ -1204,16 +1204,7 @@ gtop_compute_mode_dma(struct perf_device *dev, struct vivante_gpu_state *st)
 	uint32_t cmd_state_idx;
 	int err;
 
-
-	if (!profiler_state.enabled) {
-		if (perf_check_profiler(&profiler_state.state, dev) < 0)
-			return -1;
-
-		if (perf_profiler_enable(dev) < 0)
-			return -1;
-
-		profiler_state.enabled = true;
-	}
+	perf_check_profiler(&profiler_state.state, dev);
 
 	err = perf_read_register(PERF_MGPU_3D_CORE_0, VIVS_FE_DMA_DEBUG_STATE, &data, dev);
 	if (err < 0) {
@@ -1247,17 +1238,8 @@ gtop_compute_mode_occupancy(struct perf_device *dev, struct vivante_gpu_state *s
 	int err;
 	uint32_t idle_reg_addr = GC_TOTAL_IDLE_CYCLES;
 
-	if (!profiler_state.enabled) {
 
-		if (perf_check_profiler(&profiler_state.state, dev) < 0)
-			return -1;
-
-		if (perf_profiler_enable(dev) < 0)
-			return -1;
-
-		profiler_state.enabled = true;
-	}
-
+	perf_check_profiler(&profiler_state.state, dev);
 
 	err = perf_read_register(PERF_MGPU_3D_CORE_0, VIVS_HI_IDLE_STATE, &data, dev);
 	if (err < 0) {
