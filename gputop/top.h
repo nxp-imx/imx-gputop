@@ -97,7 +97,7 @@ enum page {
 	PAGE_COUNTER_PART2,	/* counters part 2 */
 	PAGE_DMA,		/* dma */
 	PAGE_OCCUPANCY,		/* occupancy */
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 	PAGE_DDR_PERF,		/* DDR PMUs */
 #endif
 	
@@ -111,7 +111,7 @@ enum display_mode {
 	MODE_PERF_COUNTER_PART2,
 	MODE_PERF_DMA,
 	MODE_PERF_OCCUPANCY,
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 	MODE_PERF_DDR,
 #endif
 
@@ -207,7 +207,7 @@ struct gtop_hw_drv_info {
 	bool found;
 };
 
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 #define PERF_DDR_PMUS_COUNT	2
 
 struct perf_pmu_event_type {

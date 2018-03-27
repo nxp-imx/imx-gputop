@@ -46,7 +46,7 @@
 #include <gpuperfcnt/gpuperfcnt_vivante.h>
 #include <gpuperfcnt/gpuperfcnt_log.h>
 
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 #include <ddrperfcnt/ddr-perf.h>
 #endif
 
@@ -67,7 +67,7 @@ static int volatile resized = 0;
 /* for/not reading counters */
 static bool paused = false;
 
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 static int perf_ddr_enabled = 0;
 #endif
 
@@ -129,7 +129,7 @@ static struct p_page program_pages[] = {
 	[PAGE_DMA]		= { PAGE_DMA, "DMA engines" },
 	[PAGE_OCCUPANCY]	= { PAGE_OCCUPANCY, "Occupancy" },
 	[PAGE_VID_MEM_USAGE]	= { PAGE_VID_MEM_USAGE, "VidMem" },
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 	[PAGE_DDR_PERF]		= { PAGE_DDR_PERF, "DDR" },
 #endif
 };
@@ -145,7 +145,7 @@ struct dma_table dma_tables[] = {
 
 #define NUM_DMA_TABLES (sizeof(dma_tables) / sizeof(dma_tables[0]))
 
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 /* what DDR pmus we want to read, if you want to add more you also need
  * to modify PERF_DDR_PMUS_COUNT  */
 static struct perf_pmu_ddr perf_pmu_ddrs[] = {
@@ -653,7 +653,7 @@ gtop_display_vid_mem_usage(struct perf_device *dev, struct gtop_hw_drv_info *gin
 	debugfs_free_clients(&clients);
 }
 
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 static void
 gtop_configure_pmus(void)
 {
@@ -864,7 +864,7 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 		return;
 	}
 
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 	gtop_display_perf_pmus_short();
 #endif
 
@@ -1046,7 +1046,7 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 		case MODE_PERF_OCCUPANCY:
 			gtop_display_interactive_mode_occupancy(&gtop.st);
 			break;
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 		case MODE_PERF_DDR:
 			gtop_display_perf_pmus();
 			break;
@@ -1076,7 +1076,7 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 		case PAGE_OCCUPANCY:
 			gtop_display_interactive_mode_occupancy(&gtop.st);
 			break;
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 		case PAGE_DDR_PERF:
 			gtop_display_perf_pmus();
 			break;
@@ -1570,7 +1570,7 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 				break;
 			case MODE_PERF_VID_MEM_USAGE:
 			case MODE_PERF_SHOW_CLIENTS:
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 			case MODE_PERF_DDR:
 				break;
 #endif
@@ -1594,7 +1594,7 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 				break;
 			case MODE_PERF_VID_MEM_USAGE:
 			case MODE_PERF_SHOW_CLIENTS:
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 			case MODE_PERF_DDR:
 				break;
 #endif
@@ -1641,7 +1641,7 @@ gtop_display_interactive_help(void)
 
 	fprintf(stdout, "%s\n", clear_screen);
 
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 	fprintf(stdout, " Arrows (<-|->) to navigate between pages         | Use 0-6 to switch directly\n");
 #else
 	fprintf(stdout, " Arrows (<-|->) to navigate between pages         | Use 0-5 to switch directly\n");
@@ -1819,7 +1819,7 @@ gtop_check_keyboard(struct perf_device *dev)
 	case KEY_5:
 		curr_page = PAGE_OCCUPANCY;
 		break;
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 	case KEY_6:
 		curr_page = PAGE_DDR_PERF;
 		break;
@@ -1855,7 +1855,7 @@ gtop_check_keyboard(struct perf_device *dev)
 		profiler_state.enabled = false;
 	}
 
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 	/* disable reading DDR perf PMUs */
 	if ((curr_page != PAGE_SHOW_CLIENTS ||
 	     curr_page != PAGE_DDR_PERF) && perf_ddr_enabled) {
@@ -2000,7 +2000,7 @@ parse_args(int argc, char **argv)
 				mode = MODE_PERF_DMA;
 			} else if (!strncmp(optarg, "vidmem", strlen("vidmem"))) {
 				mode = MODE_PERF_VID_MEM_USAGE;
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 			} else if (!strncmp(optarg, "ddr", strlen("ddr"))) {
 				mode = MODE_PERF_DDR;
 #endif
@@ -2165,7 +2165,7 @@ int main(int argc, char *argv[])
 	perf_profiler_stop(dev);
 	perf_profiler_disable(dev);
 	perf_exit(dev);
-#ifdef HAVE_DDR_PERF
+#if defined HAVE_DDR_PERF && defined __linux__
 	gtop_disable_pmus();
 #endif
 
