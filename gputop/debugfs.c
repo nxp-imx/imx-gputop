@@ -44,7 +44,7 @@ debugfs_get_contexts(struct debugfs_client *clients, const char *path)
 	struct debugfs_client *client = NULL;
 
 	if (!path) {
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 		file = debugfs_fopen("debugfs", "w");
 		if (!file)
 			return -1;
@@ -62,7 +62,7 @@ debugfs_get_contexts(struct debugfs_client *clients, const char *path)
 
 	memset(buf, 0, sizeof(char) * 1024);
 
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 	debugfs_reopen(file, "r");
 #endif
 
@@ -76,7 +76,7 @@ debugfs_get_contexts(struct debugfs_client *clients, const char *path)
 			uint32_t pid, err;
 
 
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 			char *name = malloc(sizeof(char) * 512);
 			memset(name, 0, sizeof(char) * 512);
 			err = sscanf(line, "Process: %d   %[a-zA-Z0-9-]s\n", &pid, name);
@@ -111,7 +111,7 @@ debugfs_get_contexts(struct debugfs_client *clients, const char *path)
 				}
 
 			}
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 			free(name);
 #endif
 		}
@@ -170,7 +170,7 @@ debugfs_get_current_ctx(struct debugfs_client *client, const char *path)
 	int __nr = 0;
 
 	if (!path) {
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 		file = debugfs_fopen("debugfs", "w");
 		if (!file)
 			return -1;
@@ -185,7 +185,7 @@ debugfs_get_current_ctx(struct debugfs_client *client, const char *path)
 	if (!file)
 		return -1;
 
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 	debugfs_reopen(file, "r");
 #endif
 
@@ -198,7 +198,7 @@ debugfs_get_current_ctx(struct debugfs_client *client, const char *path)
 		if (strncmp(line, "Process:", 8) == 0) {
 			uint32_t pid, err;
 
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 			char *name = malloc(sizeof(char) * 512);
 			memset(name, 0, sizeof(char) * 512);
 			err = sscanf(line, "Process: %d   %[a-zA-Z0-9-]s\n", &pid, name);
@@ -219,7 +219,7 @@ debugfs_get_current_ctx(struct debugfs_client *client, const char *path)
 					found_process = false;
 				}
 			}
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 			free(name);
 #endif
 		}
@@ -404,7 +404,7 @@ debugfs_get_current_clients(struct debugfs_client *clients, const char *path)
 	memset(clients, 0, sizeof(*clients));
 
 	if (!path) {
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 		/* 
 		 * On QNX we open the named pipe and then we write
 		 * what we want to retrieve 
@@ -429,7 +429,7 @@ debugfs_get_current_clients(struct debugfs_client *clients, const char *path)
 
 	memset(buf, 0, sizeof(char) * 1024);
 
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 	debugfs_reopen(file, "r");
 #endif
 
@@ -447,7 +447,7 @@ debugfs_get_current_clients(struct debugfs_client *clients, const char *path)
 		client = malloc(sizeof(*client));
 		memset(client, 0, sizeof(*client));
 
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 		client->name = malloc(sizeof(char) * 512);
 		err = sscanf(line, "%d  %[a-zA-Z0-9-]s\n", &client->pid, client->name);
 #else

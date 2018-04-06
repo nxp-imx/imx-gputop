@@ -257,7 +257,7 @@ get_input_char(void)
 	FD_ZERO(&fds);
 	FD_SET(STDIN_FILENO, &fds);
 
-#ifdef __QNXTO__
+#if defined __QNXTO__ || defined __QNX__
 	struct timeval tval;
 	tval.tv_sec = ts.tv_sec;
 	tval.tv_usec = ts.tv_nsec / 1000;
@@ -900,7 +900,7 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 		 * skip also programs that do not have CTXs.
 		 * Is this indeed valid? For X11 apps it seems so.
 		 */
-#ifndef __QNXTO__
+#if !defined __QNXTO__ || !defined __QNX__
 		if (curr_client->ctx_no == 0)
 			continue;
 #endif
@@ -949,7 +949,7 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 			client_total.non_paged / (1024),
 			client_total.total / (1024));
 
-#ifndef __QNXNTO__
+#if !defined __QNXNTO__ || !defined __QNX__
 	char cmdline[512];
 	uint32_t contigousSize;
 	FILE *file;
@@ -2100,7 +2100,6 @@ int main(int argc, char *argv[])
 		tty_reset(&tty_old);
 		exit(EXIT_FAILURE);
 	}
-
 
 	err = perf_open(VIV_HW_3D, dev);
 	if (err < 0 && err != ERR_KERNEL_MISMATCH) {
