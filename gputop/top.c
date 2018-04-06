@@ -2103,6 +2103,12 @@ int main(int argc, char *argv[])
 
 
 	err = perf_open(VIV_HW_3D, dev);
+	if (err < 0 && err != ERR_KERNEL_MISMATCH) {
+		fprintf(stderr, "Failed to open driver connection: %s\n",
+				perf_get_last_error(dev));
+		tty_reset(&tty_old);
+		exit(EXIT_FAILURE);
+	}
 
 	/* get driver, hw info */
 	gtop_get_gtop_info(dev, &gtop_info);
