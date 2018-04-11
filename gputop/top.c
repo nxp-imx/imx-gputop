@@ -900,7 +900,7 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 		 * skip also programs that do not have CTXs.
 		 * Is this indeed valid? For X11 apps it seems so.
 		 */
-#if !defined __QNXTO__ || !defined __QNX__
+#if !defined __QNXTO__ && !defined __QNX__
 		if (curr_client->ctx_no == 0)
 			continue;
 #endif
@@ -949,7 +949,7 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 			client_total.non_paged / (1024),
 			client_total.total / (1024));
 
-#if !defined __QNXNTO__ || !defined __QNX__
+#if !defined __QNXNTO__ && !defined __QNX__
 	char cmdline[512];
 	uint32_t contigousSize;
 	FILE *file;
