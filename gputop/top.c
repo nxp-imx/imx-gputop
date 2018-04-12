@@ -1253,39 +1253,39 @@ gtop_compute_mode_occupancy(struct perf_device *dev, struct vivante_gpu_state *s
 		}
 	}
 
-	err = perf_read_register(PERF_MGPU_3D_CORE_0, idle_reg_addr, &st->idle_cycles_core0, dev);
-	if (err < 0) {
-		dprintf("Failed to read 0x%x\n", idle_reg_addr);
-		return err;
-	}
-
-	if (st->idle_cycles_core0)
-		st->total_idle_cycles_core0++;
-
-	/* for second core */
-	if (gtop_info.cores[0] > 1) {
-		err = perf_read_register(PERF_MGPU_3D_CORE_1, idle_reg_addr, &st->idle_cycles_core1, dev);
-		if (err < 0) {
-			dprintf("Failed to read 0x%x on core 1\n", idle_reg_addr);
-			return err;
-		}
-		if (st->idle_cycles_core1)
-			st->total_idle_cycles_core1++;
-	}
-
-
-	/* now reset it */
+	/*
+	 * used to be read then reset, turns out reset then read works better.
+	 */
 	err = perf_write_register(PERF_MGPU_3D_CORE_0, idle_reg_addr, 0x0, dev);
 	if (err < 0) {
-		dprintf("Failed to reset 0x%x\n", idle_reg_addr);
+		dprintf("Failed to reset 0x%x for CORE0\n", idle_reg_addr);
 		return err;
 	}
+
 	if (gtop_info.cores[0] > 1) {
 		err = perf_write_register(PERF_MGPU_3D_CORE_1, idle_reg_addr, 0x0, dev);
 		if (err < 0) {
 			dprintf("Failed to reset 0x%x for CORE1\n", idle_reg_addr);
 			return err;
 		}
+	}
+	err = perf_read_register(PERF_MGPU_3D_CORE_0, idle_reg_addr, &st->idle_cycles_core0, dev);
+	if (err < 0) {
+		dprintf("Failed to read 0x%x for CORE0\n", idle_reg_addr);
+		return err;
+	}
+
+	if (st->idle_cycles_core0)
+		st->total_idle_cycles_core0++;
+
+	if (gtop_info.cores[0] > 1) {
+		err = perf_read_register(PERF_MGPU_3D_CORE_1, idle_reg_addr, &st->idle_cycles_core1, dev);
+		if (err < 0) {
+			dprintf("Failed to read 0x%x for CORE1\n", idle_reg_addr);
+			return err;
+		}
+		if (st->idle_cycles_core1)
+			st->total_idle_cycles_core1++;
 	}
 
 	return 0;
