@@ -599,7 +599,9 @@ gtop_display_vid_mem_usage(struct perf_device *dev, struct gtop_hw_drv_info *gin
 		if (!strncmp(curr_client->name, prg_name, strlen(prg_name)))
 			continue;
 
-		debugfs_get_vid_mem(&vid_mem_client, curr_client->pid);
+		int ret = debugfs_get_vid_mem(&vid_mem_client, curr_client->pid);
+		if (ret == -1)
+			goto out_exit;
 
 		/* scale them when their are too bigger */
 		if (vid_mem_client.index > scale_factor)
@@ -649,6 +651,7 @@ gtop_display_vid_mem_usage(struct perf_device *dev, struct gtop_hw_drv_info *gin
 	}
 
 	fprintf(stdout, "\nN: If value is bigger than %u, assume kBytes, otherwise Bytes\n", scale_factor);
+out_exit:
 	/* free all resources */
 	debugfs_free_clients(&clients);
 }
@@ -1573,7 +1576,10 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 #if defined HAVE_DDR_PERF && defined __linux__
 			case MODE_PERF_DDR:
 				break;
+#else
+				break;
 #endif
+
 			default:
 				dprintf("Invalid mode specified\n");
 				exit(EXIT_FAILURE);
@@ -1596,6 +1602,8 @@ gtop_compute(struct perf_device *dev, struct gtop *gtop)
 			case MODE_PERF_SHOW_CLIENTS:
 #if defined HAVE_DDR_PERF && defined __linux__
 			case MODE_PERF_DDR:
+				break;
+#else
 				break;
 #endif
 			default:
