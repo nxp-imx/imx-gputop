@@ -278,8 +278,14 @@ debugfs_get_vid_mem(struct debugfs_vid_mem_client *client, pid_t pid)
 	char pid_str[128];
 
 	memset(client, 0, sizeof(*client));
-
+#if defined __QNX__ || defined __QNXTO__
+	file = debugfs_fopen("debugfs", "w");
+	if (!file)
+		return -1;
+	debugfs_write("vidmem", strlen("vidmem"), file);
+#else
 	file = debugfs_fopen("vidmem", "w+");
+#endif
 	if (!file)
 		return -1;
 
@@ -288,76 +294,147 @@ debugfs_get_vid_mem(struct debugfs_vid_mem_client *client, pid_t pid)
 
 	debugfs_write(pid_str, strlen(pid_str), file);
 
+#if defined __QNXTO__ || defined __QNX__
+	debugfs_reopen(file, "r");
+#endif
+
 	while ((fgets(buf, 1024, file)) != NULL) {
 		char *line = buf;
 
 		if (!strncmp(line, "All-Types", strlen("All-Types")))
 			continue;
 
+		/* QNX doesn't know about %ms so we need to allocate by
+		 * ourselves */
+#if defined __QNXTO__ || defined __QNX__
+		char *name = calloc(512, sizeof(char));
+#else
 		char *name = NULL;
+#endif
 
 		if (!strncmp(line, "Index", strlen("Index"))) {
+#if defined __QNXTO__ || defined __QNX__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->index);
+#else
 			sscanf(line, "%ms %u", &name, &client->index);
+#endif
 		}
 
 		if (!strncmp(line, "Vertex", strlen("Vertex"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->vertex);
+#else
 			sscanf(line, "%ms %u", &name, &client->vertex);
+#endif
 		}
 
 		if (!strncmp(line, "Texture", strlen("Texture"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->texture);
+#else
 			sscanf(line, "%ms %u", &name, &client->texture);
+#endif
 		}
 
 		if (!strncmp(line, "RenderTarget", strlen("RenderTarget"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->render_target);
+#else
 			sscanf(line, "%ms %u", &name, &client->render_target);
+#endif
 		}
 
 		if (!strncmp(line, "Depth", strlen("Depth"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->depth);
+#else
 			sscanf(line, "%ms %u", &name, &client->depth);
+#endif
 		}
 
 		if (!strncmp(line, "Bitmap", strlen("Bitmap"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->bitmap);
+#else
 			sscanf(line, "%ms %u", &name, &client->bitmap);
+#endif
 		}
 
 		if (!strncmp(line, "TileStatus", strlen("TileStatus"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->tile_status);
+#else
 			sscanf(line, "%ms %u", &name, &client->tile_status);
+#endif
 		}
 
 		if (!strncmp(line, "Image", strlen("Image"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->image);
+#else
 			sscanf(line, "%ms %u", &name, &client->image);
+#endif
 		}
 
 		if (!strncmp(line, "Mask", strlen("Mask"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->mask);
+#else
 			sscanf(line, "%ms %u", &name, &client->mask);
+#endif
 		}
 
 		if (!strncmp(line, "Scissor", strlen("Scissor"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->scissor);
+#else
 			sscanf(line, "%ms %u", &name, &client->scissor);
+#endif
 		}
 
 		if (!strncmp(line, "HZ", strlen("HZ"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->hz);
+#else
 			sscanf(line, "%ms %u", &name, &client->hz);
+#endif
 		}
 
 		if (!strncmp(line, "ICache", strlen("ICache"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->i_cache);
+#else
 			sscanf(line, "%ms %u", &name, &client->i_cache);
+#endif
 		}
 
 		if (!strncmp(line, "TxDesc", strlen("TxDesc"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->tx_desc);
+#else
 			sscanf(line, "%ms %u", &name, &client->tx_desc);
+#endif
 		}
 
 		if (!strncmp(line, "Fence", strlen("Fence"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->fence);
+#else
 			sscanf(line, "%ms %u", &name, &client->fence);
+#endif
 		}
 
 		if (!strncmp(line, "TFBHeader", strlen("TFBHeader"))) {
+#if defined __QNXTO__ || defined __QNXTO__
+			sscanf(line, "%[a-zA-Z0-9-] %u", name, &client->tfbheader);
+#else
 			sscanf(line, "%ms %u", &name, &client->tfbheader);
+#endif
 		}
 
-		if (name)
+		if (name) {
 			free(name);
+		}
 	}
 
 	fclose(file);
