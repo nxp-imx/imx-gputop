@@ -112,7 +112,8 @@ struct termios tty_old;
 static const char clear_screen[] = { 0x1b, '[', 'H', 0x1b, '[', 'J', 0x0 };
 
 /* this will write over the data already present */
-static const char *clear_data_screen = "\033c";
+// static const char *clear_data_screen = "\033c";
+
 /* other modifiers */
 static const char *bold_color = "\033[1m";
 static const char *underlined_color = "\033[4m";
@@ -246,23 +247,21 @@ static int
 get_input_char(void)
 {
 	fd_set fds;
-
 	int rc;
-	struct timespec ts = {};
-
-	/* one second time out */
-	ts.tv_sec = DELAY_SECS;
-	ts.tv_nsec = DELAY_NSECS;
 
 	FD_ZERO(&fds);
 	FD_SET(STDIN_FILENO, &fds);
 
 #if defined __QNXTO__ || defined __QNX__
-	struct timeval tval;
-	tval.tv_sec = ts.tv_sec;
-	tval.tv_usec = ts.tv_nsec / 1000;
+	struct timeval tval = {};
+	tval.tv_sec = DELAY_SECS;
+	tval.tv_usec = DELAY_NSECS / 1000;
 	rc = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tval);
 #else
+	struct timespec ts = {};
+	/* one second time out */
+	ts.tv_sec = DELAY_SECS;
+	ts.tv_nsec = DELAY_NSECS;
 	rc = pselect(STDIN_FILENO + 1, &fds, NULL, NULL, &ts, NULL);
 #endif
 
@@ -1005,7 +1004,7 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 {
 
 	fflush(stdout);
-	fprintf(stdout, "%s", clear_data_screen);
+	fprintf(stdout, "%s", clear_screen);
 
 	/* check any errors related to module being properly loaded */
 	gtop_check_profiler_state();
@@ -1060,6 +1059,7 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 			break;
 		}
 	} else {
+		fprintf(stdout, "showing curr_page %d\n", curr_page);
 		switch (curr_page) {
 		case PAGE_SHOW_CLIENTS:
 			gtop_display_clients(dev, &gtop_info);
@@ -1678,8 +1678,21 @@ gtop_check_keyboard(struct perf_device *dev)
 	}
 
 	memset(&buf, 0, sizeof(buf));
+	ssize_t nread = -1;
 
-	ssize_t nread = read(STDIN_FILENO, &buf, sizeof(buf));
+	/*
+	 * Over serial reading input chars is problematic as we need 3-bytes.
+	 */
+	do {
+		nread = read(STDIN_FILENO, &buf, sizeof(buf));
+	} while (nread == -1 || nread == 2 || nread == 0);
+
+	/* mask the other bytes as buf will be overwritten when the third byte
+	 * is read, see top.h as for serial we've encoded the arrow keys with
+	 * just one byte */
+	if (buf >> 8 && nread != 3)
+		buf &= 0x000000ff;
+
 	/* please compiler */
 	(void) nread;
 
@@ -1717,8 +1730,10 @@ gtop_check_keyboard(struct perf_device *dev)
 			}
 		}
 		break;
-	case KB_RIGHT:
 	case KB_UP:
+	case KB_RIGHT:
+	case KB_RIGHT_SERIAL:
+	case KB_UP_SERIAL:
 		curr_page++;
 
 		/* verify if we indeed still have a valid context, but
@@ -1746,8 +1761,10 @@ gtop_check_keyboard(struct perf_device *dev)
 			}
 		}
 		break;
-	case KB_LEFT:
 	case KB_DOWN:
+	case KB_LEFT:
+	case KB_LEFT_SERIAL:
+	case KB_DOWN_SERIAL:
 		/* verify if we indeed still have a valid context, but
 		 * we are displaying old info */
 		curr_page--;
@@ -1871,6 +1888,7 @@ gtop_check_keyboard(struct perf_device *dev)
 		perf_ddr_enabled = 0;
 	}
 #endif
+	fprintf(stdout, "curr_page %d\n", curr_page);
 	return 0;
 }
 

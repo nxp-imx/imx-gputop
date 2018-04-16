@@ -35,10 +35,22 @@
 #define KB_BACK		0x0000007F
 #define KB_HOME		0x00485b1b
 #define KB_END		0x00465b1b
+
 #define KB_UP		0x00415B1B
 #define KB_DOWN		0x00425B1B
 #define KB_LEFT		0x00445B1B
 #define KB_RIGHT	0x00435B1B
+
+/*
+ * we need 3 bytes to interpret arrow keys but under serial we don't receive all
+ * bytes in one go so we need read multiple times. Doing so will overwrite the
+ * buf, so we mask the last byte and compare against the following:
+ */
+#define KB_UP_SERIAL	0x41
+#define KB_DOWN_SERIAL	0x42
+#define KB_LEFT_SERIAL	0x44
+#define KB_RIGHT_SERIAL	0x43
+
 #define KB_KEY_P	0x00000070
 
 #define KEY_0		0x00000030
