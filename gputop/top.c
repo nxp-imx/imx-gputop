@@ -1671,6 +1671,7 @@ gtop_check_keyboard(struct perf_device *dev)
 {
 	int rc;
 	long long buf;
+again_read_input:
 
 	rc = get_input_char();
 	if (rc == 0) {
@@ -1695,8 +1696,6 @@ gtop_check_keyboard(struct perf_device *dev)
 
 	/* please compiler */
 	(void) nread;
-
-	int prev_page = curr_page;
 
 	switch (buf) {
 	case KEY_H:
@@ -1755,9 +1754,9 @@ gtop_check_keyboard(struct perf_device *dev)
 					perf_context_set(selected_ctx, dev);
 				}
 			} else {
-				gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n", true);
-				curr_page = prev_page;
-				break;
+				gtop_wait_for_keyboard("* Context not selected or feature not available, switch to other view mode!\n", true);
+				curr_page++;
+				goto again_read_input;
 			}
 		}
 		break;
@@ -1785,9 +1784,9 @@ gtop_check_keyboard(struct perf_device *dev)
 					perf_context_set(selected_ctx, dev);
 				}
 			} else {
-				gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n", true);
-				curr_page = prev_page;
-				break;
+				gtop_wait_for_keyboard("** Context not selected or feature not available, switch to other view mode!\n", true);
+				curr_page--;
+				goto again_read_input;
 			}
 		}
 		break;
