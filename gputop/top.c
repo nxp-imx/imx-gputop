@@ -1059,7 +1059,6 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 			break;
 		}
 	} else {
-		fprintf(stdout, "showing curr_page %d\n", curr_page);
 		switch (curr_page) {
 		case PAGE_SHOW_CLIENTS:
 			gtop_display_clients(dev, &gtop_info);
@@ -1671,7 +1670,6 @@ gtop_check_keyboard(struct perf_device *dev)
 {
 	int rc;
 	long long buf;
-again_read_input:
 
 	rc = get_input_char();
 	if (rc == 0) {
@@ -1755,8 +1753,11 @@ again_read_input:
 				}
 			} else {
 				gtop_wait_for_keyboard("* Context not selected or feature not available, switch to other view mode!\n", true);
-				curr_page++;
-				goto again_read_input;
+				if (curr_page == PAGE_COUNTER_PART1)
+					curr_page += 2;
+				else
+					curr_page++;
+				break;
 			}
 		}
 		break;
@@ -1785,8 +1786,11 @@ again_read_input:
 				}
 			} else {
 				gtop_wait_for_keyboard("** Context not selected or feature not available, switch to other view mode!\n", true);
-				curr_page--;
-				goto again_read_input;
+				if (curr_page == PAGE_COUNTER_PART2)
+					curr_page -= 2;
+				else
+					curr_page--;
+				break;
 			}
 		}
 		break;
@@ -1811,7 +1815,7 @@ again_read_input:
 				perf_context_set(selected_ctx, dev);
 			}
 		} else {
-			gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n", true);
+			gtop_wait_for_keyboard("! Context not selected or feature not available, switch to other view mode!\n", true);
 			break;
 		}
 
@@ -1832,7 +1836,7 @@ again_read_input:
 				perf_context_set(selected_ctx, dev);
 			}
 		} else {
-			gtop_wait_for_keyboard("Context not selected or feature not available, switch to other view mode!\n", true);
+			gtop_wait_for_keyboard("!! Context not selected or feature not available, switch to other view mode!\n", true);
 			break;
 		}
 		curr_page = PAGE_COUNTER_PART2;
@@ -1887,7 +1891,6 @@ again_read_input:
 		perf_ddr_enabled = 0;
 	}
 #endif
-	fprintf(stdout, "curr_page %d\n", curr_page);
 	return 0;
 }
 
