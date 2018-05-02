@@ -148,9 +148,11 @@ if (FOUND_PANDOC)
 	message(STATUS "Found pandoc. Creating man target")
 	add_custom_target(man
 		COMMAND pandoc -s -t man ${CMAKE_SOURCE_DIR}/man/gputop.md > ${CMAKE_SOURCE_DIR}/man/gputop.8
+		COMMAND pandoc -s -t plain ${CMAKE_SOURCE_DIR}/man/gputop.md > ${CMAKE_SOURCE_DIR}/man/gputop.txt
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/man
 		COMMAND cp ${CMAKE_SOURCE_DIR}/man/*.md ${CMAKE_BINARY_DIR}/man
 		COMMAND pandoc -s -t man man/gputop.md > man/gputop.8
+		COMMAND pandoc -s -t plain man/gputop.md > man/gputop.txt
 	)
 add_dependencies(gputop man)
 endif()

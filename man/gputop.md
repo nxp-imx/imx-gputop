@@ -1,6 +1,6 @@
 % GPUTOP(8)
 % Marius Vlad <marius-cristian.vlad@nxp.com>
-% March 11, 2018
+% May 02, 2018
 
 # NAME
 
