@@ -157,6 +157,11 @@ if (FOUND_PANDOC)
 add_dependencies(gputop man)
 endif()
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL "QNX")
+	add_custom_target(add_qnx_man
+	COMMAND usemsg ${CMAKE_BINARY_DIR}/gputop ${CMAKE_BINARY_DIR}/man/gputop.txt
+	)
+endif()
 
 install(TARGETS gputop DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES ${CMAKE_SOURCE_DIR}/man/gputop.8 DESTINATION ${CMAKE_INSTALL_MANDIR}/man8/)
