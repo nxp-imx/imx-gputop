@@ -585,7 +585,7 @@ gtop_display_vid_mem_usage(struct perf_device *dev, struct gtop_hw_drv_info *gin
 		return;
 	}
 
-	fprintf(stdout, "\n%s", underlined_color);
+	fprintf(stdout, "%s", underlined_color);
 	fprintf(stdout, "%6s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s", 
 			"PID", "IN", "VE", "TE", "RT", "DE",
 			"BM", "TS", "IM", "MA", "SC",
@@ -1984,8 +1984,9 @@ void help(void)
 	dprintf("                occupancy   Show occupancy (non-idle) states of modules\n");
 	dprintf("                dma         DMA engine states\n");
 	dprintf("                vidmem	    Additional video memory information\n");
+#if defined __linux__ && defined HAVE_DDR_PERF
 	dprintf("                ddr	    Show Kernel PMUs related to memory bandwidth\n");
-
+#endif
 	dprintf("  -c <ctx>      Specify context to track\n");
 	dprintf("  -b            Show batch (instantaneous of requested mode)\n");
 	dprintf("  -f            Read counters in batch mode\n");

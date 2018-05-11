@@ -44,15 +44,7 @@ debugfs_get_contexts(struct debugfs_client *clients, const char *path)
 	struct debugfs_client *client = NULL;
 
 	if (!path) {
-#if defined __QNXTO__ || defined __QNX__
-		file = debugfs_fopen("debugfs", "w");
-		if (!file)
-			return -1;
-
-		debugfs_write("database", strlen("database"), file);
-#else
 		file = debugfs_fopen("database", "r");
-#endif
 	} else {
 		file = fopen(path, "r");
 	}
@@ -61,11 +53,6 @@ debugfs_get_contexts(struct debugfs_client *clients, const char *path)
 		return -1;
 
 	memset(buf, 0, sizeof(char) * 1024);
-
-#if defined __QNXTO__ || defined __QNX__
-	debugfs_reopen(file, "r");
-#endif
-
 
 	while ((fgets(buf, 1024, file)) != NULL) {
 		char *line = buf;
@@ -170,24 +157,13 @@ debugfs_get_current_ctx(struct debugfs_client *client, const char *path)
 	int __nr = 0;
 
 	if (!path) {
-#if defined __QNXTO__ || defined __QNX__
-		file = debugfs_fopen("debugfs", "w");
-		if (!file)
-			return -1;
-		debugfs_write("database", strlen("database"), file);
-#else
 		file = debugfs_fopen("database", "r");
-#endif
 	} else {
 		file = fopen(path, "r");
 	}
 
 	if (!file)
 		return -1;
-
-#if defined __QNXTO__ || defined __QNX__
-	debugfs_reopen(file, "r");
-#endif
 
 	memset(buf, 0, sizeof(char) * 1024);
 
@@ -278,14 +254,8 @@ debugfs_get_vid_mem(struct debugfs_vid_mem_client *client, pid_t pid)
 	char pid_str[128];
 
 	memset(client, 0, sizeof(*client));
-#if defined __QNX__ || defined __QNXTO__
-	file = debugfs_fopen("debugfs", "w");
-	if (!file)
-		return -1;
-	debugfs_write("vidmem", strlen("vidmem"), file);
-#else
 	file = debugfs_fopen("vidmem", "w+");
-#endif
+	
 	if (!file)
 		return -1;
 
@@ -294,7 +264,8 @@ debugfs_get_vid_mem(struct debugfs_vid_mem_client *client, pid_t pid)
 
 	debugfs_write(pid_str, strlen(pid_str), file);
 
-#if defined __QNXTO__ || defined __QNX__
+#if defined __QNX__ || defined __QNXTO__
+	/* we still needs this for QNX... */
 	debugfs_reopen(file, "r");
 #endif
 
@@ -481,22 +452,7 @@ debugfs_get_current_clients(struct debugfs_client *clients, const char *path)
 	memset(clients, 0, sizeof(*clients));
 
 	if (!path) {
-#if defined __QNXTO__ || defined __QNX__
-		/* 
-		 * On QNX we open the named pipe and then we write
-		 * what we want to retrieve 
-		 */
-
-		file = debugfs_fopen("debugfs", "w");
-		if (!file) {
-			fprintf(stderr, "Failed to open debugfs\n");
-			return 0;
-		}
-
-		debugfs_write("clients", strlen("clients"), file);
-#else
 		file = debugfs_fopen("clients", "r");
-#endif
 	} else {
 		file = fopen(path, "r");
 	}
@@ -505,10 +461,6 @@ debugfs_get_current_clients(struct debugfs_client *clients, const char *path)
 		return 0;
 
 	memset(buf, 0, sizeof(char) * 1024);
-
-#if defined __QNXTO__ || defined __QNX__
-	debugfs_reopen(file, "r");
-#endif
 
 	while ((fgets(buf, 1024, file)) != NULL) {
 		char *line = buf;
