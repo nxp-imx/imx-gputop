@@ -1,18 +1,19 @@
 % GPUTOP(8)
 % Marius Vlad <marius-cristian.vlad@nxp.com>
-% May 02, 2018
+% June 04, 2018
 
 # NAME
 
 **gputop** --  Monitor GPU clients memory, hardware counters, occupancy state
-load on DMA engines, VideoMemory and and DDR memory bandwidth.
+load on DMA engines, VideoMemory and and DDR memory bandwidth (only under
+Linux).
 
 # SYNOPSIS
 
 **gputop** [options]
 
 **gputop** -m [mode] -- Where mode can be: **mem**, **counter_1**, **counter_2**,
-**occupancy**, **dma**, **vidmem** and **ddr**.
+**occupancy**, **dma**, **vidmem** and **ddr** (under Linux).
 Use this option to start **gputop** directly in a mode that you're interested on.
 For **counter_1** and **counter_2** a context will be needed.
 See *NOTES* section why this is necessary.
@@ -21,7 +22,9 @@ See *NOTES* section why this is necessary.
 hardware counters.
 
 **gputop** -b -- display in batch mode. For other modes than memory, this will
-only take an instantaneous sample.
+only take an instantaneous sample. See -f
+
+**gputop** -f -- Use this when using **gputop** from a script.
 
 **gputop** -x -- useful to display contexts when used with ``-b''
 
@@ -70,34 +73,10 @@ See you distro manual on how to to do that.
 	
 ### QNX
 
-Under QNX, the GPU driver exposes the debugfs functionality by making use of
-named pipe (i.e.: a FIFO). Due to the way QNX is built, **gputop** will **not**
-try to create that FIFO (as QNX systems usually have their filesystem in RAM)
-thus, there has to be already a FIFO created/present in the system.
-Normally the FIFO is created under /var, specifically **/var/debugfs**. 
-
-Additionally, under QNX gpu-debugfs-dump-to-fd must be set to `1' in
-graphics.conf which is normally found under $GRAPHICS_ROOT path. Lastly, 
-the QNX GPU driver is being lazy-loaded by the application, thus access
-to the named pipe is **conditioned** by the fact that QNX_VIV_DEBUGFS
-has to be set before starting ``screen'' application. This is important, and
-without it the driver processing part of commands coming from **gputop**, would
-not be started.
-
-To summarise the following have to be done in order for QNX:
-
-* make sure you have a named piped in the system (normally should be
-/var/debugfs).
-* set **gpu-debugfs-dump-to-fd** set to 1 in graphics.conf. This
-will allow **gputop** to communicate with the driver over the FIFO.
-* export QNX_VIV_DEBUGFS=/var/debugfs.
-* start screen and your application (put it in background). This will create
-a thread in the system that will parse commands received over debugfs, if the 
-**QNX_VIV_DEBUGFS** is exported to a valid FIFO.
-* now you can start **gputop**.
-
-In order to be able to read the hardware counter values **gpu-gpuProfiler** has
-to be set to 1 in ``graphics.conf'' file under $GRAPHICS_ROOT directory.
+Just like in Linux, in order to be able to read the hardware counter values
+**gpu-gpuProfiler** has to be set to 1 in ``graphics.conf'' file under
+$GRAPHICS_ROOT directory. Other views like ``occupancy'' and DMA will require
+**gpu-powerManagement** to be set to 0 (disabled).
 
 # NOTES
 
@@ -112,7 +91,6 @@ situations where the application will submit either to fast or to low commands
 to the GPU, several modes of viewing counters has been added. Cycle between them
 to understand or get a bird-eye view of the counter values.  Empirically
 MAX/AVERAGE displays the closes values to the truth.
-
 
 ## Context-aware counters
 
@@ -208,9 +186,8 @@ ids
 
 # SEE ALSO
 
-* under QNX see **graphics.conf** for enabling FIFO communication and the 
-profiler.
+* under QNX see **graphics.conf** for disabling powerManagement and
+enabling gpuProfiler.
 * under Linux see **/sys/modules/galcore/paramenters/gpuProfiler** and
 **/sys/modules/galcore/parameters/PowerManagement**.
 * *libgpuperfcnt(8)*
-
