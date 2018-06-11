@@ -1495,7 +1495,7 @@ gtop_get_ctx_from_keyboard(struct perf_device *dev)
 	(void) m;
 
 	/* if we don't support this board */
-	if (gtop_is_chip_model(0x7000, dev)) {
+	if (gtop_is_chip_model(0x7000, dev) && (gtop_info.drv_info.build < 150331)) {
 		tty_init(&tty_old);
 		gtop_wait_for_keyboard("GC7000 not supported at the moment!\n", true);
 		tty_reset(&tty_old);
@@ -2165,10 +2165,10 @@ int main(int argc, char *argv[])
 
 	if (FLAG_IS_SET(flags, FLAG_CONTEXT)) {
 		/* 
-		 * some GPUs like gc7000 do not support reading counters
-		 * using current methods
+		 * Before 6.2.4p1 gc7000 does not support reading counters using
+		 * available methods.
 		 */
-		if (gtop_is_chip_model(0x7000, dev)) {
+		if (gtop_is_chip_model(0x7000, dev) && gtop_info.drv_info.build < 150331) {
 			fprintf(stderr, "Reading counters for GC7000 not supported at the moment!\n");
 			tty_reset(&tty_old);
 			perf_exit(dev);

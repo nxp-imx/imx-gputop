@@ -135,8 +135,8 @@ real context-id.
 Unsupported GPUs
 
 Do note, that on newer GPU cores, like GC7000 models, the behaviour is
-different and currently it is not NOT SUPPORTED by GPUTOP, due to
-various issues in the driver.
+different and it is not ONLY SUPPORTED in driver version newer than
+6.2.4p1 (Build at least 150331).
 
 
 

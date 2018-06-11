@@ -112,9 +112,9 @@ context-id.
 
 ## Unsupported GPUs
 
-Do note, that on newer GPU cores, like GC7000 models, the behaviour is different
-and currently it is not **not supported** by **gputop**, due to various issues
-in the driver.
+Do note, that on newer GPU cores, like GC7000 models, the behaviour is
+different and it is not **only supported** in driver version newer than 6.2.4p1
+(Build at least 150331).
 
 # PAGES
 
