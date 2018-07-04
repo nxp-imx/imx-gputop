@@ -527,3 +527,229 @@ debugfs_free_clients(struct debugfs_client *clients)
 
 	memset(clients, 0, sizeof(*clients));
 }
+
+/*
+ * returns current clock
+ */
+int
+debugfs_get_gpu_clocks(struct debugfs_clock *clocks, const char *path)
+{
+	FILE *file = NULL;
+	char buf[1024];
+
+	if (!path) {
+		file = debugfs_fopen("clk", "r");
+	} else {
+		file = fopen(path, "r");
+	}
+
+	if (!file)
+		return -1;
+
+	memset(buf, 0, sizeof(buf));
+	while ((fgets(buf, 1024, file)) != NULL) {
+		char *line = buf;
+
+		if (!strncmp(line, "gpu", 3)) {
+			int core = -1;
+			unsigned int clock_freq = 0;
+
+			int err = sscanf(line, "gpu%d mc clock: %u HZ.", &core, &clock_freq);
+			if (err == 2) {
+				if (core == 0) {
+					if (clock_freq) {
+						clocks->gpu_core_0 = clock_freq;
+						/* no need to test for shader */
+						continue;
+					}
+				} else if (core == 1) {
+					if (clock_freq) {
+						clocks->gpu_core_1 = clock_freq;
+						/* no need to test for shader */
+						continue;
+					}
+				}
+			}
+
+			core = -1;
+			clock_freq = 0;
+			err = sscanf(line, "gpu%d sh clock: %u HZ.", &core, &clock_freq);
+			if (err == 2) {
+				if (core == 0) {
+					if (clock_freq) {
+						clocks->shader_core_0 = clock_freq;
+					}
+				} else if (core == 1) {
+					if (clock_freq) {
+						clocks->shader_core_1 = clock_freq;
+					}
+				}
+
+			}
+
+
+		}
+
+	}
+
+	/* verify that we got data */
+	if (clocks->gpu_core_0 == 0 || clocks->shader_core_0 == 0)
+		return -1;
+
+	fclose(file);
+
+	return 0;
+}
+
+/*
+ * retrieves current gpu governor.
+ */
+int
+debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
+{
+	FILE *file = NULL;
+	char buf[1024];
+	struct debugfs_govern *__governor = NULL;
+	unsigned int __governor_index = 0;
+
+	const char path[] = "/sys/bus/platform/drivers/galcore/gpu_mode";
+	/* newer version 6.2.4.p2 */
+	const char path2[] = "/sys/bus/platform/drivers/galcore/gpu_govern";
+	file = fopen(path, "r");
+
+	if (!file) {
+		file = fopen(path2, "r");
+		if (!file)
+			return -1;
+	}
+
+	memset(buf, 0, sizeof(buf));
+	unsigned int modes = 0;
+
+	while ((fgets(buf, 1024, file)) != NULL) {
+		char *line = buf;
+
+
+		if (!strncmp(line, "GPU support", 11)) {
+			int err = sscanf(line, "GPU support %d modes", &modes);
+			assert(err == 1);
+			assert(modes != 0);
+
+			__governor = calloc(modes, sizeof(struct debugfs_govern));
+			continue;
+		}
+
+		assert(modes != 0);
+
+		/* overdrive:      core_clk frequency: 800000000   shader_clk frequency: 1000000000	 */
+#if defined __QNXTO__ || defined __QNX__
+		char *naming_mode = calloc(1024, sizeof(char));
+		int err = sscanf(line, "%[a-zA-Z0-9-]s", naming_mode);
+		assert(err == 1 || naming_mode = NULL);
+#else
+		char *naming_mode = NULL;
+		int err = sscanf(line, "%ms", &naming_mode);
+		assert(err == 1 || naming_mode != NULL);
+#endif
+
+
+		if (!strncmp(naming_mode, "overdrive", 9) ||
+		    !strncmp(naming_mode, "nominal", 7) ||
+		    !strncmp(naming_mode, "underdrive", 10)) {
+
+			char *n_line = line + strlen(naming_mode);
+
+			/* eat whitespace */
+			while (n_line && *n_line) {
+				if (*n_line == ' ' || *n_line == '\t')
+					n_line++;
+				else
+					break;
+			}
+
+			unsigned long int core_clock_freq = 0;
+			unsigned long int shader_clock_freq = 0;
+
+			int __err = sscanf(n_line, "core_clk frequency: %lu   shader_clk frequency: %lu", &core_clock_freq, &shader_clock_freq);
+			assert(__err == 2);
+
+			__governor[__governor_index].gpu_core_freq = core_clock_freq;
+			__governor[__governor_index].shader_core_freq = shader_clock_freq;
+
+			if (!strncmp(naming_mode, "overdrive", 9))
+			       __governor[__governor_index].governor = OVERDRIVE;
+			else if (!strncmp(naming_mode, "nominal", 7))
+				__governor[__governor_index].governor = NOMINAL;
+			else if (!strncmp(naming_mode, "underdrive", 10))
+				__governor[__governor_index].governor = UNDERDRIVE;
+
+
+			/* fail if we coudn't find a proper type */
+			assert(__governor->governor != 0);
+			/* fail if more have been added */
+			assert(__governor_index <= modes);
+
+			__governor_index++;
+
+			if (naming_mode)
+				free(naming_mode);
+
+			/* go to next line */
+			continue;
+		}
+
+		/* now we need to find out which one of those we are currently running */
+		if (!strncmp(line, "Currently", 9)) {
+
+			unsigned int current_mode_enum = 0;
+			/* check if indeed we found it, we might have failed parsing? */
+			int found = 0;
+
+			/* FIXME: Add QNX */
+#if defined __QNXTO__ || defined __QNX__
+			char *current_mode = calloc(1024, sizeof(char));
+			int err = sscanf(line, "Currently GPU runs on mode %[a-zA-Z0-9-]s", current_mode);
+			assert(err == 1);
+#else
+			char *current_mode = NULL;
+			int err = sscanf(line, "Currently GPU runs on mode %ms", &current_mode);
+			assert(err == 1);
+#endif
+
+			if (!strncmp(current_mode, "overdrive", 9))
+				current_mode_enum = OVERDRIVE;
+			else if (!strncmp(current_mode, "nominal", 7))
+				current_mode_enum = NOMINAL;
+			else if (!strncmp(current_mode, "underdrive", 10))
+				current_mode_enum = UNDERDRIVE;
+
+
+			/* go over what we've got and determine which one to use */
+			for (size_t i = 0; i < modes; i++) {
+				if (current_mode_enum == __governor[i].governor) {
+					governor->governor = current_mode_enum;
+					governor->gpu_core_freq = __governor[i].gpu_core_freq;
+					governor->shader_core_freq = __governor[i].shader_core_freq;
+					found = 1;
+					break;
+				}
+			}
+
+			if (current_mode)
+				free(current_mode);
+
+			/* just in we case we didn't find something relevant */
+			assert(found == 1);
+		}
+
+	}
+
+	/* wipe out the memory allocated */
+	if (__governor)
+		free(__governor);
+
+	fclose(file);
+
+	return 0;
+}
+

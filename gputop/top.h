@@ -219,6 +219,16 @@ struct gtop_hw_drv_info {
 	bool found;
 };
 
+/*
+ * current governor and clocks
+ */
+struct gtop_clocks_governor {
+	struct debugfs_govern governor;
+	struct debugfs_clock clock;
+
+	bool available;
+};
+
 #if defined HAVE_DDR_PERF && defined __linux__
 #define PERF_DDR_PMUS_COUNT	2
 

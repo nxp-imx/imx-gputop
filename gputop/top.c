@@ -83,8 +83,10 @@ static struct profiler_state profiler_state = {
 };
 #endif
 
-struct gtop_hw_drv_info gtop_info;
+static struct gtop_hw_drv_info gtop_info;
 static struct perf_version perf_version;
+static struct gtop_clocks_governor governor;
+static const char *governor_names[] = { "underdrive", "nominal", "overdrive" };
 
 /* the  # of samples to take in a period of time  */
 static int samples = 100;
@@ -272,6 +274,20 @@ static void
 delay(void)
 {
 	nanosleep(&(struct timespec) { .tv_sec = DELAY_SECS, .tv_nsec = DELAY_NSECS }, NULL);
+}
+
+static int 
+gtop_get_clocks_governor(struct gtop_clocks_governor *d)
+{
+	int ret = 0;
+	ret = debugfs_get_gpu_clocks(&d->clock, NULL);
+	if (ret)
+		return ret;
+	ret = debugfs_get_current_gpu_governor(&d->governor);
+	if (ret)
+		return ret;
+
+	return ret;
 }
 
 static bool
@@ -844,15 +860,38 @@ gtop_display_perf_pmus_short(void)
 #endif
 
 static void
+gtop_display_clocks_governor(struct gtop_clocks_governor *governor)
+{
+	if (governor->governor.governor)
+		fprintf(stdout, "Governor: %s\n", governor_names[governor->governor.governor - 1]);
+
+	if (governor->clock.gpu_core_0)
+		fprintf(stdout, "Core: %u MHz, Shader: %u MHz\n",
+				governor->clock.gpu_core_0 / (1000 * 1000),
+				governor->clock.shader_core_0 / (1000 * 1000));
+
+	if (governor->clock.gpu_core_1)
+		fprintf(stdout, "Core: %u MHz, Shader: %u MHz\n",
+				governor->clock.gpu_core_1 / (1000 * 1000),
+				governor->clock.shader_core_1 / (1000 * 1000));
+
+}
+
+static void
 gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 {
 	struct debugfs_client clients;
 	struct debugfs_client *curr_client;
 	struct perf_client_memory client_total = {};
 
+	memset(&governor, 0, sizeof(struct gtop_clocks_governor));
+
 	int nr_clients = 0;
 
 	gtop_display_drv_info(dev, ginfo);
+	if (!gtop_get_clocks_governor(&governor))
+		gtop_display_clocks_governor(&governor);
+
 
 	nr_clients = debugfs_get_current_clients(&clients, NULL);
 
@@ -1006,7 +1045,7 @@ gtop_display_interactive(struct perf_device *dev, const struct gtop gtop)
 	fflush(stdout);
 	fprintf(stdout, "%s", clear_screen);
 
-	/* check any errors related to module being properly loaded */
+	/* check any errors related to module *not* being properly loaded */
 	gtop_check_profiler_state();
 
 	if (FLAG_IS_SET(flags, FLAG_MODE))

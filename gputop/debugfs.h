@@ -64,6 +64,28 @@ struct debugfs_vid_mem_client {
 	uint32_t tfbheader;
 };
 
+struct debugfs_clock {
+	uint32_t gpu_core_0;
+	uint32_t shader_core_0;
+
+	/* for QM */
+	uint32_t gpu_core_1;
+	uint32_t shader_core_1;
+};
+
+enum governor {
+	UNDERDRIVE = 1,
+	NOMINAL,
+	OVERDRIVE,
+};
+
+struct debugfs_govern {
+	enum governor governor;
+
+	uint32_t gpu_core_freq;
+	uint32_t shader_core_freq;
+};
+
 /**
  * \brief: helper macro for iterating over clients list
  */
@@ -109,5 +131,17 @@ debugfs_print_contexts(struct debugfs_client *clients);
 
 int
 debugfs_get_vid_mem(struct debugfs_vid_mem_client *client, pid_t pid);
+
+/**
+ *
+ */
+int
+debugfs_get_gpu_clocks(struct debugfs_clock *clocks, const char *path);
+
+/**
+ *
+ */
+int
+debugfs_get_current_gpu_governor(struct debugfs_govern *governor);
 
 #endif
