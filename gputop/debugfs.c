@@ -609,7 +609,8 @@ debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
 {
 	FILE *file = NULL;
 	char buf[1024];
-	struct debugfs_govern *__governor = NULL;
+	/* no need to allocate each time */
+	static struct debugfs_govern *__governor = NULL;
 	unsigned int __governor_index = 0;
 
 	const char path[] = "/sys/bus/platform/drivers/galcore/gpu_mode";
@@ -635,7 +636,10 @@ debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
 			assert(err == 1);
 			assert(modes != 0);
 
-			__governor = calloc(modes, sizeof(struct debugfs_govern));
+			if (__governor == NULL)
+				__governor = calloc(modes, sizeof(struct debugfs_govern));
+			else
+				memset(__governor, 0, sizeof(*__governor));
 			continue;
 		}
 
@@ -743,10 +747,6 @@ debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
 		}
 
 	}
-
-	/* wipe out the memory allocated */
-	if (__governor)
-		free(__governor);
 
 	fclose(file);
 
