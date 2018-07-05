@@ -575,7 +575,6 @@ gtop_display_drv_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo, s
 				hw_info_iter->model,
 				hw_info_iter->revision);
 
-
 		if (governor.clock.gpu_core_0 && core_id == 0)
 			fprintf(stdout, "Core: %u MHz, Shader: %u MHz ",
 					governor.clock.gpu_core_0 / (1000 * 1000),
@@ -583,6 +582,7 @@ gtop_display_drv_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo, s
 
 		if (governor.clock.gpu_core_0  && governor.clock.gpu_core_1 && core_id == 0)
 			fprintf(stdout, "\n");
+
 
 		if (governor.clock.gpu_core_1 && core_id == 1)
 			fprintf(stdout, "Core: %u MHz, Shader: %u MHz ",
