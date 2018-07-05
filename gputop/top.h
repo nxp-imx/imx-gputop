@@ -225,8 +225,6 @@ struct gtop_hw_drv_info {
 struct gtop_clocks_governor {
 	struct debugfs_govern governor;
 	struct debugfs_clock clock;
-
-	bool available;
 };
 
 #if defined HAVE_DDR_PERF && defined __linux__

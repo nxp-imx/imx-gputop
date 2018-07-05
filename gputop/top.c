@@ -85,7 +85,6 @@ static struct profiler_state profiler_state = {
 
 static struct gtop_hw_drv_info gtop_info;
 static struct perf_version perf_version;
-static struct gtop_clocks_governor governor;
 static const char *governor_names[] = { "underdrive", "nominal", "overdrive" };
 
 /* the  # of samples to take in a period of time  */
@@ -276,18 +275,16 @@ delay(void)
 	nanosleep(&(struct timespec) { .tv_sec = DELAY_SECS, .tv_nsec = DELAY_NSECS }, NULL);
 }
 
-static int 
+/*
+ * Older version of the driver might not have these, or the board doesn't
+ * support them so we don't fail here. When printing we verify if we have
+ * something valid. Also QNX might not support all of these.
+ */
+static void
 gtop_get_clocks_governor(struct gtop_clocks_governor *d)
 {
-	int ret = 0;
-	ret = debugfs_get_gpu_clocks(&d->clock, NULL);
-	if (ret)
-		return ret;
-	ret = debugfs_get_current_gpu_governor(&d->governor);
-	if (ret)
-		return ret;
-
-	return ret;
+	debugfs_get_gpu_clocks(&d->clock, NULL);
+	debugfs_get_current_gpu_governor(&d->governor);
 }
 
 static bool
@@ -542,9 +539,10 @@ gtop_free_gtop_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 }
 
 static void
-gtop_display_drv_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
+gtop_display_drv_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo, struct gtop_clocks_governor governor)
 {
 	struct perf_hw_info *hw_info_iter = NULL;
+	int core_id = 0;
 
 	/* print info about driver */
 	fprintf(stdout, "Galcore version:%d.%d.%d.%d, ",
@@ -553,7 +551,9 @@ gtop_display_drv_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 	fprintf(stdout, "gpuperfcnt:%s, %s\n",
 			perf_version.git_version, perf_version.version);
 
-	fprintf(stdout, "HW:");
+	if (governor.governor.governor)
+		fprintf(stdout, "Governor: %s\n", governor_names[governor.governor.governor - 1]);
+
 	list_for_each(hw_info_iter, ginfo->hw_info.head) {
 		enum perf_core_type c_type = 
 			perf_get_core_type(hw_info_iter->id, dev);
@@ -574,6 +574,19 @@ gtop_display_drv_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 		fprintf(stdout, "GC%x,Rev:%x ",
 				hw_info_iter->model,
 				hw_info_iter->revision);
+
+
+		if (governor.clock.gpu_core_0 && core_id == 0)
+			fprintf(stdout, "Core: %u MHz, Shader: %u MHz\n",
+					governor.clock.gpu_core_0 / (1000 * 1000),
+					governor.clock.shader_core_0 / (1000 * 1000));
+
+		if (governor.clock.gpu_core_1 && core_id == 1)
+			fprintf(stdout, "Core: %u MHz, Shader: %u MHz ",
+					governor.clock.gpu_core_1 / (1000 * 1000),
+					governor.clock.shader_core_1 / (1000 * 1000));
+
+		core_id++;
 	}
 
 	fprintf(stdout, "\n");
@@ -588,11 +601,14 @@ gtop_display_vid_mem_usage(struct perf_device *dev, struct gtop_hw_drv_info *gin
 	struct debugfs_client clients;
 	struct debugfs_client *curr_client;
 	struct debugfs_vid_mem_client vid_mem_client;
+	struct gtop_clocks_governor governor = {};
 	uint32_t scale_factor = 1024;
 
 	int nr_clients = 0;
 
-	gtop_display_drv_info(dev, ginfo);
+	gtop_get_clocks_governor(&governor);
+
+	gtop_display_drv_info(dev, ginfo, governor);
 
 	nr_clients = debugfs_get_current_clients(&clients, NULL);
 
@@ -860,38 +876,18 @@ gtop_display_perf_pmus_short(void)
 #endif
 
 static void
-gtop_display_clocks_governor(struct gtop_clocks_governor *governor)
-{
-	if (governor->governor.governor)
-		fprintf(stdout, "Governor: %s\n", governor_names[governor->governor.governor - 1]);
-
-	if (governor->clock.gpu_core_0)
-		fprintf(stdout, "Core: %u MHz, Shader: %u MHz\n",
-				governor->clock.gpu_core_0 / (1000 * 1000),
-				governor->clock.shader_core_0 / (1000 * 1000));
-
-	if (governor->clock.gpu_core_1)
-		fprintf(stdout, "Core: %u MHz, Shader: %u MHz\n",
-				governor->clock.gpu_core_1 / (1000 * 1000),
-				governor->clock.shader_core_1 / (1000 * 1000));
-
-}
-
-static void
 gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 {
 	struct debugfs_client clients;
 	struct debugfs_client *curr_client;
 	struct perf_client_memory client_total = {};
-
-	memset(&governor, 0, sizeof(struct gtop_clocks_governor));
+	struct gtop_clocks_governor governor = {};
 
 	int nr_clients = 0;
 
-	gtop_display_drv_info(dev, ginfo);
-	if (!gtop_get_clocks_governor(&governor))
-		gtop_display_clocks_governor(&governor);
-
+	/* get and display clocks */
+	gtop_get_clocks_governor(&governor);
+	gtop_display_drv_info(dev, ginfo, governor);
 
 	nr_clients = debugfs_get_current_clients(&clients, NULL);
 
