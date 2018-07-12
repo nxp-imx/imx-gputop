@@ -649,7 +649,7 @@ debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
 #if defined __QNXTO__ || defined __QNX__
 		char *naming_mode = calloc(1024, sizeof(char));
 		int err = sscanf(line, "%[a-zA-Z0-9-]s", naming_mode);
-		assert(err == 1 || naming_mode = NULL);
+		assert(err == 1 || naming_mode != NULL);
 #else
 		char *naming_mode = NULL;
 		int err = sscanf(line, "%ms", &naming_mode);
