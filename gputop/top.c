@@ -1957,7 +1957,7 @@ gtop_retrieve_perf_counters(struct perf_device *dev, bool batch)
 		gtop_data_create(VIV_PROF_COUNTER_PART2, num_perf_counters_part2, 0);
 
 
-	fprintf(stdout, clear_screen);
+	fprintf(stdout, "%s", clear_screen);
 
 	begin_time = get_ns_time();
 	while (1) {
