@@ -5,7 +5,7 @@ LOCAL_MODULE := gputop
 
 LOCAL_C_INCLUDES += ../gputop ${GPUPERFCNT_INCLUDE_PATH}
 LOCAL_CFLAGS += -Wall -Wextra -Werror -Wstrict-prototypes -Wmissing-prototypes \
-		-std=c99 -O2 -UNDEBUG 
+		-std=c99 -O2 -UNDEBUG -DHAVE_DDR_PERF
 
 LOCAL_SHARED_LIBRARIES += gpuperfcnt
 LOCAL_LDLIBS += -lgpuperfcnt
