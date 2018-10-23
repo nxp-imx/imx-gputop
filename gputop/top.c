@@ -480,30 +480,6 @@ gtop_display_interactive_mode_dma(const struct vivante_gpu_state *st)
 	}
 }
 
-#if 0
-static int
-print_vidmem_info(char *pid)
-{
-    int i = 0;
-    FILE *fd = NULL;
-    char info[512];
-
-    fd = fopen("/sys/kernel/debug/gpu/vidmem", "w+");
-    fwrite(pid, 1, strlen(pid), fd);
-
-    for (i = 0; i < 3; i++) {
-
-        memset(&info[0], 0, sizeof(info));
-        fgets(&info[0], sizeof(info)-1, fd);
-        fprintf(stdout, "%s", info + (i ? 10 : 0));
-    }
-
-    fclose(fd);
-
-    return 0;
-}
-#endif
-
 static void
 gtop_get_gtop_info(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 {
