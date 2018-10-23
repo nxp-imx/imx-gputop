@@ -1255,6 +1255,12 @@ gtop_compute_mode_occupancy(struct perf_device *dev, struct vivante_gpu_state *s
 	int err;
 	uint32_t idle_reg_addr = GC_TOTAL_IDLE_CYCLES;
 
+	if (gtop_is_chip_model(0x880, dev)) {
+		idle_reg_addr = GC_TOTAL_CYCLES;
+	} else if (gtop_is_chip_model(0x2000, dev)) {
+		idle_reg_addr = GC_2000_TOTAL_IDLE_CYCLES;
+	}
+
 
 	perf_check_profiler(&profiler_state.state, dev);
 
