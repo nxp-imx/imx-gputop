@@ -109,7 +109,8 @@ static const char *prg_name = "gputop";
 /* current termios state */
 struct termios tty_old;
 
-/* this will clear the entire screen, much faster than printing new lines */
+/* this will clear the entire screen, much faster than printing new lines, see
+ * console_codes(4) */
 static const char clear_screen[] = { 0x1b, '[', 'H', 0x1b, '[', 'J', 0x0 };
 
 /* this will write over the data already present */
