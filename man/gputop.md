@@ -1,11 +1,11 @@
 % GPUTOP(8)
 % Marius Vlad <marius-cristian.vlad@nxp.com>
-% June 04, 2018
+% October 25, 2018
 
 # NAME
 
 **gputop** --  Monitor GPU clients memory, hardware counters, occupancy state
-load on DMA engines, VideoMemory and and DDR memory bandwidth (only under
+load on DMA engines, video memory and and DDR memory bandwidth (only under
 Linux).
 
 # SYNOPSIS
@@ -13,7 +13,7 @@ Linux).
 **gputop** [options]
 
 **gputop** -m [mode] -- Where mode can be: **mem**, **counter_1**, **counter_2**,
-**occupancy**, **dma**, **vidmem** and **ddr** (under Linux).
+**occupancy**, **dma**, **vidmem** and **ddr** (under Linux/Android).
 Use this option to start **gputop** directly in a mode that you're interested on.
 For **counter_1** and **counter_2** a context will be needed.
 See *NOTES* section why this is necessary.
@@ -58,7 +58,7 @@ a **DMA engine** page and an **Occupancy** page. When normally started,
 **gputop** will be in interactive mode.  Type 'h' to get a list of the
 current keybindings.
 
-# REQUIREMENTS 
+# REQUIREMENTS
 
 ### Linux
 
@@ -98,16 +98,16 @@ MAX/AVERAGE displays the closes values to the truth.
 application).
 
 Internally the driver assigns various context IDs to the application submitting
-commands to the GPU. These contexts IDs are currently required to read
-those hardware counter values. Either use **-x** on the command line
-(together with **-b** option and choosing **-m mem** viewing mode), 
-or for interactive mode use 'x' and then 'SPACE' to show and select a context ID. 
+commands to the GPU. These contexts IDs are currently required to read those
+hardware counter values. Either use **-x** on the command line (together with
+**-b** option and choosing **-m mem** viewing mode), or for interactive
+mode use 'x' and then 'SPACE' to show and select a context ID.
 
 In case you are getting zero'ed out values for **counter_1** 
 and/or **counter_2** values, cycle thru the available counter IDs.
 
-Due to the way the driver is built, for single-core applications **two**
-context-ids are shown. Empirically the largest integer values holds the real
+Due to the way the driver is built, for single-GPU core applications will have
+**two** context-ids. Empirically the largest integer values holds the real
 context-id.
 
 ## Unsupported GPUs
@@ -115,6 +115,9 @@ context-id.
 Do note, that on newer GPU cores, like GC7000 models, the behaviour is
 different and it is not **only supported** in driver version newer than 6.2.4p1
 (Build at least 150331).
+
+For GCV600 (i.MX7ULP and i.MX8MM) the IDLE/LOAD register is not available hence
+**gputop** will display incorrect (inversed) values.
 
 # PAGES
 

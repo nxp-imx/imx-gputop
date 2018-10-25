@@ -1,6 +1,6 @@
 GPUTOP(8)
 Marius Vlad marius-cristian.vlad@nxp.com
-June 04, 2018
+October 25, 2018
 
 
 
@@ -8,7 +8,7 @@ NAME
 
 
 GPUTOP -- Monitor GPU clients memory, hardware counters, occupancy state
-load on DMA engines, VideoMemory and and DDR memory bandwidth (only
+load on DMA engines, video memory and and DDR memory bandwidth (only
 under Linux).
 
 
@@ -19,9 +19,9 @@ SYNOPSIS
 GPUTOP [options]
 
 GPUTOP -m [mode] -- Where mode can be: MEM, COUNTER_1, COUNTER_2,
-OCCUPANCY, DMA, VIDMEM and DDR (under Linux). Use this option to start
-GPUTOP directly in a mode that you're interested on. For COUNTER_1 and
-COUNTER_2 a context will be needed. See _NOTES_ section why this is
+OCCUPANCY, DMA, VIDMEM and DDR (under Linux/Android). Use this option to
+start GPUTOP directly in a mode that you're interested on. For COUNTER_1
+and COUNTER_2 a context will be needed. See _NOTES_ section why this is
 necessary.
 
 GPUTOP -c ctx_no -- specify a context to attach when display
@@ -127,9 +127,9 @@ context ID.
 In case you are getting zero'ed out values for COUNTER_1 and/or
 COUNTER_2 values, cycle thru the available counter IDs.
 
-Due to the way the driver is built, for single-core applications TWO
-context-ids are shown. Empirically the largest integer values holds the
-real context-id.
+Due to the way the driver is built, for single-GPU core applications
+will have TWO context-ids. Empirically the largest integer values holds
+the real context-id.
 
 
 Unsupported GPUs
@@ -137,6 +137,9 @@ Unsupported GPUs
 Do note, that on newer GPU cores, like GC7000 models, the behaviour is
 different and it is not ONLY SUPPORTED in driver version newer than
 6.2.4p1 (Build at least 150331).
+
+For GCV600 (i.MX7ULP and i.MX8MM) the IDLE/LOAD register is not
+available hence GPUTOP will display incorrect (inversed) values.
 
 
 
