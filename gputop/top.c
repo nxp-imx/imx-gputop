@@ -677,6 +677,8 @@ gtop_configure_pmus(void)
 	for_all_pmus(perf_pmu_ddrs, i, j) {
 		const char *type_name = PMU_GET_TYPE_NAME(perf_pmu_ddrs, i);
 		const char *event_name = PMU_GET_EVENT_NAME(perf_pmu_ddrs, i, j);
+		if ( ! perf_event_pmu_exist(type_name) )
+			continue;
 
 		type = perf_event_pmu_get_type(type_name);
 		config = perf_event_pmu_get_event(type_name, event_name);
