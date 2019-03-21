@@ -581,7 +581,7 @@ debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
 			unsigned long int core_clock_freq = 0;
 			unsigned long int shader_clock_freq = 0;
 
-			int rv = sscanf(n_line, "core_clk frequency: %lu\tshader_clk frequency: %lu", &core_clock_freq, &shader_clock_freq);
+			int rv = sscanf(n_line, "%*[^c]core_clk frequency: %lu%*[^s]shader_clk frequency: %lu", &core_clock_freq, &shader_clock_freq);
 			if (rv != 2) {
 				fprintf(stderr, "reading core-freq(%lu) and shader-freq(%lu) failed: %s\n", core_clock_freq, shader_clock_freq, n_line);
 				assert(!"exit");
