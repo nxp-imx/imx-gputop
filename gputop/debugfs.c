@@ -125,10 +125,8 @@ debugfs_get_contexts(struct debugfs_client *clients, const char *path)
 				assert(client != NULL);
 
 				if (client->ctx == NULL) {
-					client->ctx = calloc(10, sizeof(uint32_t));
+					client->ctx = calloc(512, sizeof(uint32_t));
 				}
-
-				assert(client->ctx_no < 10);
 
 				client->ctx[client->ctx_no++] = no;
 			}
