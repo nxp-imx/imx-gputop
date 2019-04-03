@@ -16,10 +16,12 @@ LOCAL_CFLAGS += \
   -UNDEBUG \
   -DHAVE_DDR_PERF
 
-LOCAL_SHARED_LIBRARIES += libgpuperfcnt
+LOCAL_STATIC_LIBRARIES += libgpuperfcnt
 
 LOCAL_SRC_FILES := \
   gputop/debugfs.c \
   gputop/top.c
 
+LOCAL_VENDOR_MODULE  := true
+LOCAL_MODULE_TAGS    := optional
 include $(BUILD_EXECUTABLE)
