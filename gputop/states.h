@@ -1,10 +1,10 @@
 /*
- * Copyright (C) NXP 2017
  * Copyright (C) 2012-2017 by the following authors:
  * - Wladimir J. van der Laan <laanwj@gmail.com>
  * - Christian Gmeiner <christian.gmeiner@gmail.com>
  * - Lucas Stach <l.stach@pengutronix.de>
  * - Russell King <rmk@arm.linux.org.uk>
+ * Copyright NXP 2017
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
