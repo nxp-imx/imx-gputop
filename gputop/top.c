@@ -2168,19 +2168,17 @@ int main(int argc, char *argv[])
 		if (err == ERR_KERNEL_MISMATCH) {
 		    if (!FLAG_IS_SET(flags, FLAG_IGNORE_START_ERRORS)) {
 			fprintf(stdout, "Warning: Kernel mismatch, ");
-			fprintf(stdout, "Driver version %d.%d.%d.%d\n",
+			fprintf(stdout, "Driver version %d.%d\n",
 				gtop_info.drv_info.major,
-				gtop_info.drv_info.minor,
-				gtop_info.drv_info.patch,
-				gtop_info.drv_info.build);
+				gtop_info.drv_info.minor
+				);
 			fprintf(stdout, "Library version: GIT: %s, VERSION: %s\n",
 				perf_version.git_version,
 				perf_version.version);
-			fprintf(stdout, "Module version %d.%d.%d.%d\n",
+			fprintf(stdout, "Module version %d.%d\n",
 				gcvVERSION_MAJOR,
-				gcvVERSION_MINOR,
-				gcvVERSION_PATCH,
-				gcvVERSION_BUILD);
+				gcvVERSION_MINOR
+				);
 
 			gtop_wait_for_keyboard(NULL, false);
 		    }
