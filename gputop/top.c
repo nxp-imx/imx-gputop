@@ -2176,6 +2176,12 @@ int main(int argc, char *argv[])
 			fprintf(stdout, "Library version: GIT: %s, VERSION: %s\n",
 				perf_version.git_version,
 				perf_version.version);
+			fprintf(stdout, "Module version %d.%d.%d.%d\n",
+				gcvVERSION_MAJOR,
+				gcvVERSION_MINOR,
+				gcvVERSION_PATCH,
+				gcvVERSION_BUILD);
+
 			gtop_wait_for_keyboard(NULL, false);
 		    }
 		} else {
