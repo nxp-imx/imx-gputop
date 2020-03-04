@@ -421,7 +421,10 @@ debugfs_free_clients(struct debugfs_client *clients)
 			/* this is the last one */
 			if (it->ctx)
 				free(it->ctx);
+			if (it->name)
+				free(it->name);
 			free(it);
+			it = NULL;
 		} else {
 			/* save next so we can remove the current node */
 			struct debugfs_client *it_next = it->next;
@@ -429,11 +432,12 @@ debugfs_free_clients(struct debugfs_client *clients)
 			/* free all storage */
 			if (it->ctx)
 				free(it->ctx);
+			if (it->name)
+				free(it->name);
 			free(it);
 
 			it = it_next;
 		}
-		it = it->next;
 	}
 
 	memset(clients, 0, sizeof(*clients));
