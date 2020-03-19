@@ -152,8 +152,8 @@ struct dma_table dma_tables[] = {
 /* what DDR pmus we want to read, if you want to add more you also need
  * to modify PERF_DDR_PMUS_COUNT  */
 static struct perf_pmu_ddr perf_pmu_ddrs[] = {
-	{ "ddr0", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
-	{ "ddr1", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
+	{ "imx8_ddr0", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
+	{ "imx8_ddr1", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
 };
 #endif
 
