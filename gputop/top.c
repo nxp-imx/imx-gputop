@@ -2213,8 +2213,11 @@ int main(int argc, char *argv[])
 
 	gtop_free_gtop_info(dev, &gtop_info);
 
-	perf_profiler_stop(dev);
-	perf_profiler_disable(dev);
+   if (profiler_state.enabled)
+   {
+      perf_profiler_stop(dev);
+      perf_profiler_disable(dev);
+   }
 	perf_exit(dev);
 #if defined HAVE_DDR_PERF && (defined __linux__ || defined __ANDROID__ || defined ANDROID)
 	gtop_disable_pmus();
