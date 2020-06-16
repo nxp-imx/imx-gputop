@@ -1,11 +1,12 @@
+ifneq ($(PREBUILT_FSL_IMX_GPU),true)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := gpu-top
 
 LOCAL_C_INCLUDES += \
-  $(TOP)/external/libgpuperfcnt/include/ \
-  $(TOP)/external/gputop/
+  $(TOP)/vendor/nxp-private/libgpuperfcnt/include/ \
+  $(TOP)/vendor/nxp-private/gputop/
 
 LOCAL_CFLAGS += \
   -Wall -Wextra -Werror \
@@ -25,3 +26,4 @@ LOCAL_SRC_FILES := \
 LOCAL_VENDOR_MODULE  := true
 LOCAL_MODULE_TAGS    := optional
 include $(BUILD_EXECUTABLE)
+endif
