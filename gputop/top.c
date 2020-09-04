@@ -2220,7 +2220,11 @@ int main(int argc, char *argv[])
    }
 	perf_exit(dev);
 #if defined HAVE_DDR_PERF && (defined __linux__ || defined __ANDROID__ || defined ANDROID)
-	gtop_disable_pmus();
+	if(perf_ddr_enabled)
+  {
+       gtop_disable_pmus();
+       perf_ddr_enabled=0;
+  }
 #endif
 
 	tty_reset(&tty_old);
