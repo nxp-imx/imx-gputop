@@ -155,6 +155,11 @@ static struct perf_pmu_ddr perf_pmu_ddrs[] = {
 	{ "imx8_ddr0", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
 	{ "imx8_ddr1", { { -1, "read-cycles" }, { -1, "write-cycles" } } },
 };
+static struct perf_pmu_ddr perf_pmu_axid_ddrs[] = {
+	{ "imx8_ddr0", { { -1, "axid-read" }, { -1, "axid-write" } } },
+	{ "imx8_ddr1", { { -1, "axid-read" }, { -1, "axid-write" } } },
+  };
+
 #endif
 
 static uint64_t
@@ -669,11 +674,28 @@ out_exit:
 
 #if defined HAVE_DDR_PERF && (defined __linux__ || defined __ANDROID__ || defined ANDROID)
 static void
+gtop_set_perf_pmus_ddr(void)
+{
+    FILE *file;
+    char buf[1024];
+    file = fopen("/sys/devices/soc0/soc_id", "r");
+    if (file == NULL) return;
+    if((fgets(buf, 1024, file)) != NULL)
+    {
+        if(!strncmp(buf, "i.MX8MP",7)){
+           memset((char *)perf_pmu_ddrs, 0,sizeof(perf_pmu_ddrs));
+           memcpy((char *)perf_pmu_ddrs, (char *)perf_pmu_axid_ddrs, sizeof(perf_pmu_axid_ddrs));
+        }
+    }
+}
+
+static void
 gtop_configure_pmus(void)
 {
 	uint32_t config, type;
 	unsigned int i, j;
 
+  gtop_set_perf_pmus_ddr();
 	for_all_pmus(perf_pmu_ddrs, i, j) {
 		const char *type_name = PMU_GET_TYPE_NAME(perf_pmu_ddrs, i);
 		const char *event_name = PMU_GET_EVENT_NAME(perf_pmu_ddrs, i, j);
@@ -844,7 +866,7 @@ gtop_display_perf_pmus_short(void)
 				uint64_t counter_val = perf_event_pmu_read(fd);
 				double display_value = (double) counter_val * 16 / (1024 * 1024);
 
-				fprintf(stdout, "%.1s:%.2f", event_name, display_value);
+				fprintf(stdout, "%s:%.2f", event_name, display_value);
 				if (j < (ARRAY_SIZE(perf_pmu_ddrs[i].events) - 1))
 						fprintf(stdout, ",");
 				perf_event_pmu_reset(fd);
