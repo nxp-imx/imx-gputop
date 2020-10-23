@@ -866,9 +866,9 @@ gtop_display_perf_pmus_short(void)
 				uint64_t counter_val = perf_event_pmu_read(fd);
 				double display_value;
       if(!strncmp(event_name, "axid",4))
-         display_value = (double) counter_val  / (1024*1024);
+         display_value = counter_val  / (1024.0*1024.0);
       else
-         display_value = (double) counter_val *16  / (1024*1024);
+         display_value = counter_val *16  / (1024.0*1024.0);
 
 				fprintf(stdout, "%s:%.2f", event_name, display_value);
 				if (j < (ARRAY_SIZE(perf_pmu_ddrs[i].events) - 1))
