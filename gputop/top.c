@@ -1510,8 +1510,8 @@ try_again:
 					if (selected_client->name)
 						free(selected_client->name);
 
-					free(selected_client);
 					memset(selected_client, 0, sizeof(*selected_client));
+					free(selected_client);
 					selected_client = NULL;
 					goto try_again;
 				}
@@ -1801,7 +1801,7 @@ gtop_check_keyboard(struct perf_device *dev)
 					perf_context_set(selected_ctx, dev);
 				}
 			} else {
-				gtop_wait_for_keyboard("* Context not selected or feature not available, switch to other view mode!\n", true);
+				gtop_wait_for_keyboard("* Context not selected or feature not available, set context first before viewing context related pages or switch to other view mode!\n", true);
 				if (curr_page == PAGE_COUNTER_PART1)
 					curr_page += 2;
 				else
@@ -1834,7 +1834,7 @@ gtop_check_keyboard(struct perf_device *dev)
 					perf_context_set(selected_ctx, dev);
 				}
 			} else {
-				gtop_wait_for_keyboard("** Context not selected or feature not available, switch to other view mode!\n", true);
+				gtop_wait_for_keyboard("** Context not selected or feature not available, set context first before viewing context related pages or switch to other view mode!\n", true);
 				if (curr_page == PAGE_COUNTER_PART2)
 					curr_page -= 2;
 				else
@@ -1864,7 +1864,7 @@ gtop_check_keyboard(struct perf_device *dev)
 				perf_context_set(selected_ctx, dev);
 			}
 		} else {
-			gtop_wait_for_keyboard("! Context not selected or feature not available, switch to other view mode!\n", true);
+			gtop_wait_for_keyboard("! Context not selected or feature not available, set context first before viewing context related pages or switch to other view mode!\n", true);
 			break;
 		}
 
@@ -1885,7 +1885,7 @@ gtop_check_keyboard(struct perf_device *dev)
 				perf_context_set(selected_ctx, dev);
 			}
 		} else {
-			gtop_wait_for_keyboard("!! Context not selected or feature not available, switch to other view mode!\n", true);
+			gtop_wait_for_keyboard("!! Context not selected or feature not available, set context first before viewing context related pages or switch to other view mode!\n", true);
 			break;
 		}
 		curr_page = PAGE_COUNTER_PART2;
