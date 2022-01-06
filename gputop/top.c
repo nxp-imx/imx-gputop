@@ -161,6 +161,7 @@ static struct perf_pmu_ddr perf_pmu_axid_ddrs[] = {
   };
 
 #endif
+static int gtop_enable_profiling(struct perf_device *dev);
 
 static uint64_t
 get_ns_time(void)
@@ -1249,7 +1250,20 @@ gtop_compute_mode_dma(struct perf_device *dev, struct vivante_gpu_state *st)
 	uint32_t cmd_state_idx;
 	int err;
 
-	perf_check_profiler(&profiler_state.state, dev);
+	if (!profiler_state.enabled) {
+
+		if (perf_check_profiler(&profiler_state.state, dev) < 0)
+			return -1;
+
+		if (gtop_enable_profiling(dev) < 0)
+			return -1;
+
+		if (perf_profiler_start(dev) < 0)
+			return -1;
+
+		profiler_state.enabled = true;
+
+	}
 
 	err = perf_read_register(PERF_MGPU_3D_CORE_0, VIVS_FE_DMA_DEBUG_STATE, &data, dev);
 	if (err < 0) {
@@ -1290,7 +1304,20 @@ gtop_compute_mode_occupancy(struct perf_device *dev, struct vivante_gpu_state *s
 	}
 
 
-	perf_check_profiler(&profiler_state.state, dev);
+	if (!profiler_state.enabled) {
+
+		if (perf_check_profiler(&profiler_state.state, dev) < 0)
+			return -1;
+
+		if (gtop_enable_profiling(dev) < 0)
+			return -1;
+
+		if (perf_profiler_start(dev) < 0)
+			return -1;
+
+		profiler_state.enabled = true;
+
+	}
 
 	err = perf_read_register(PERF_MGPU_3D_CORE_0, VIVS_HI_IDLE_STATE, &data, dev);
 	if (err < 0) {
