@@ -1796,9 +1796,8 @@ gtop_check_keyboard(struct perf_device *dev)
 			/* if context not OK wipe out */
 			if (selected_client && selected_client->name) {
 				free(selected_client->name);
-				free(selected_client);
-
 				memset(selected_client, 0, sizeof(*selected_client));
+				free(selected_client);
 				selected_client = NULL;
 			}
 		}
@@ -1818,9 +1817,8 @@ gtop_check_keyboard(struct perf_device *dev)
 				if (!gtop_check_ctx_is_valid(selected_ctx)) {
 
 					free(selected_client->name);
-					free(selected_client);
-
 					memset(selected_client, 0, sizeof(*selected_client));
+					free(selected_client);
 					selected_client = NULL;
 
 					selected_ctx = 0;
@@ -1851,9 +1849,8 @@ gtop_check_keyboard(struct perf_device *dev)
 				if (!gtop_check_ctx_is_valid(selected_ctx)) {
 
 					free(selected_client->name);
-					free(selected_client);
-
 					memset(selected_client, 0, sizeof(*selected_client));
+					free(selected_client);
 					selected_client = NULL;
 
 					selected_ctx = 0;
@@ -1881,9 +1878,8 @@ gtop_check_keyboard(struct perf_device *dev)
 			if (!gtop_check_ctx_is_valid(selected_ctx)) {
 
 				free(selected_client->name);
-				free(selected_client);
-
 				memset(selected_client, 0, sizeof(*selected_client));
+				free(selected_client);
 				selected_client = NULL;
 
 				selected_ctx = 0;
@@ -1902,9 +1898,8 @@ gtop_check_keyboard(struct perf_device *dev)
 			if (!gtop_check_ctx_is_valid(selected_ctx)) {
 
 				free(selected_client->name);
-				free(selected_client);
-
 				memset(selected_client, 0, sizeof(*selected_client));
+				free(selected_client);
 				selected_client = NULL;
 
 				selected_ctx = 0;
