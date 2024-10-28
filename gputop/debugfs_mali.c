@@ -561,7 +561,6 @@ static void display_mali_debugfs_ctx_info(struct debugfs_ctx_client *clients){
 void gtop_display_mali_debugfs_info(void){
    struct debugfs_kctx_client  kctx_clients;
    struct debugfs_ctx_client  ctx_clients;
-   memset(&info, 0, sizeof(info));
 
 // struct debugfs_ctx_client *ctx_client;
    if(debugfs_get_gpu_usage(&info, NULL)){
@@ -572,11 +571,15 @@ void gtop_display_mali_debugfs_info(void){
       fprintf(stderr, "Failed to get gpu memory\n");
       return;
    }
+   info.busy_delta_time = info.busy_time -info.last_busy_time ;
+   info.idle_delta_time = info.idle_time -info.last_idle_time ;
+   info.last_busy_time= info.busy_time;
+   info.last_idle_time = info.idle_time;
    fprintf(stdout, "%s", regular_color);
-   if(info.busy_time == 0) 
+   if(info.busy_delta_time == 0)
       fprintf(stdout, "GPU last render period frequency : %dMHz  utilization  : %.2f%%\n", info.last_render_freq/1000000, 0.0);
    else 
-      fprintf(stdout, "GPU last render period frequency : %dMHz  utilization : %.2f%%\n", info.last_render_freq/1000000, info.busy_time*100.0/(info.busy_time+info.idle_time));
+      fprintf(stdout, "GPU last render period frequency : %dMHz  utilization : %.2f%%\n", info.last_render_freq/1000000, info.busy_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
    fprintf(stdout, "gpu kernel Mem: %dKB total\n", info.total_mem_used*4);
    debugfs_free_kctx_clients(&kctx_clients);
 
@@ -661,14 +664,18 @@ void gtop_display_mali_debugfs_pid_mem_info(void){
 void gtop_display_mali_debugfs_dvfs_utilization_info()
 {
    fprintf(stdout, "\n");
-   memset(&info, 0, sizeof(info));
    if(debugfs_get_gpu_usage(&info, NULL)){
       fprintf(stderr, "Failed to get gpu dvfc usages\n");
       return;
    }
+   info.busy_delta_time = info.busy_time -info.last_busy_time ;
+   info.idle_delta_time = info.idle_time -info.last_idle_time ;
+   info.last_busy_time= info.busy_time;
+   info.last_idle_time = info.idle_time;
+
    fprintf(stdout, "GPU last render period frequency :  %dMHz\n",  info.last_render_freq/1000000);
-   fprintf(stdout, "GPU utilization : %.2f%%\n", info.busy_time*100.0/(info.busy_time+info.idle_time));
-   fprintf(stdout, "GPU protect mode utilization : %.2f%%\n", info.protm_time*100.0/(info.busy_time+info.idle_time));
+   fprintf(stdout, "GPU utilization : %.2f%%\n", info.busy_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+   fprintf(stdout, "GPU protect mode utilization : %.2f%%\n", info.protm_time*100.0/(info.busy_delta_time+info.idle_delta_time));
 
 }
 

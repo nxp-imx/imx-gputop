@@ -118,6 +118,10 @@ typedef enum
  struct debugfs_mali_info {
 	uint64_t busy_time;
 	uint64_t idle_time;
+	uint64_t last_busy_time;
+	uint64_t last_idle_time;
+	uint64_t busy_delta_time;
+	uint64_t idle_delta_time;
 	uint64_t protm_time;
 	uint64_t frag_time;
 	uint64_t non_frag_time;
