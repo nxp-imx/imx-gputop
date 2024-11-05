@@ -123,17 +123,20 @@ typedef enum
 	uint64_t busy_delta_time;
 	uint64_t idle_delta_time;
 	uint64_t protm_time;
-	uint64_t shader_time;
+       uint64_t last_protm_time;
+	uint64_t protm_delta_time;
+	uint64_t compute_time;
 	uint64_t frag_time;
 	uint64_t tiler_time;
 	uint64_t last_frag_time;
-	uint64_t last_shader_time;
+	uint64_t last_compute_time;
 	uint64_t last_tiler_time;
 	uint64_t frag_delta_time;
-	uint64_t shader_delta_time;
+	uint64_t compute_delta_time;
 	uint64_t tiler_delta_time;
 	uint32_t total_mem_used;
 	uint32_t last_render_freq;
+	bool no_shader_usage;
 
 	char  name[128];
 

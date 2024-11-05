@@ -477,13 +477,20 @@ int debugfs_get_gpu_usage(struct debugfs_mali_info *info, const char *path)
    memset(buf, 0, sizeof(char) * 1024);
    int err;
    if( fgets(buf, 1024, file) != NULL){
-      err = sscanf(line, "%s  %"PRIu64" %s%" PRIu64" %s  %"PRIu64" %s  %"PRIu64" %s%" PRIu64" %s  %"PRIu64"\n",
-                           name, &info->busy_time, name1, &info->idle_time, name2, &info->protm_time,
-                           name3, &info->shader_time, name4, &info->frag_time, name5, &info->tiler_time);
-      if(err != 12){
+      err = sscanf(line, "%s  %"PRIu64" %s%" PRIu64" %s  %"PRIu64"\n", name, &info->busy_time, name1, &info->idle_time, name2, &info->protm_time);
+      if(err != 6){
          fprintf(stderr, "Failed to sscanf usage\n"); 
          return -1;
       }
+    if( fgets(buf, 1024, file) != NULL){
+       err = sscanf(line, "%s  %"PRIu64" %s%" PRIu64" %s  %"PRIu64"\n",name3, &info->frag_time, name4, &info->compute_time, name5, &info->tiler_time);
+       if(err != 6){
+           fprintf(stderr, "Failed to sscanf usage\n");
+          return -1;
+          }
+       info->no_shader_usage=false;
+    }
+    else info->no_shader_usage=true;
       //fprintf(stdout, "busy time %d and idle time %d\n", info->busy_time, info->idle_time);
       fclose(file);
    }
@@ -680,24 +687,29 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
    }
    info.busy_delta_time = info.busy_time -info.last_busy_time ;
    info.idle_delta_time = info.idle_time -info.last_idle_time ;
+   info.protm_delta_time = info.protm_time -info.last_protm_time ;
+   info.last_protm_time = info.protm_time;
    info.last_busy_time= info.busy_time;
    info.last_idle_time = info.idle_time;
 
-   info.shader_delta_time = info.shader_time -info.last_shader_time ;
+   info.compute_delta_time = info.compute_time -info.last_compute_time ;
    info.frag_delta_time = info.frag_time -info.last_frag_time ;
    info.tiler_delta_time = info.tiler_time -info.last_tiler_time ;
 
-   info.last_shader_time= info.shader_time;
+   info.last_compute_time= info.compute_time;
    info.last_frag_time = info.frag_time;
    info.last_tiler_time = info.tiler_time;
 
    fprintf(stdout, "GPU last render period frequency :  %dMHz\n",  info.last_render_freq/1000000);
    fprintf(stdout, "GPU utilization : %.2f%%\n", info.busy_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
-   fprintf(stdout, "GPU protect mode utilization : %.2f%%\n", info.protm_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+   fprintf(stdout, "GPU protect mode utilization : %.2f%%\n", info.protm_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
 
-   fprintf(stdout, "Fragment shader utilization : %.2f%%\n", info.frag_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
-   fprintf(stdout, "Non Fragment shader utilization : %.2f%%\n",(info.shader_delta_time -info.frag_delta_time)*100.0/(info.busy_delta_time+info.idle_delta_time));
-   fprintf(stdout, "Tiler utilization : %.2f%%\n", info.tiler_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+   if(!info.no_shader_usage)
+   {
+      fprintf(stdout, "Fragment shader utilization : %.2f%%\n", info.frag_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "Non Fragment shader utilization : %.2f%%\n",(info.compute_delta_time)*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "Tiler utilization : %.2f%%\n", info.tiler_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+   }
 }
 
 #endif
