@@ -46,6 +46,7 @@ To get process based cctx memory usage, you need:
 
 	killall weston
 	export MALI_REPORT_MEM_USAGE=1
+	export MALI_LEGACY_MEM_PROFILE=1 for releaser52 and later for cctx_hist type memory usage
 	systemctl restart weston
 	gputop
 	gputop -h         see usage
