@@ -717,9 +717,11 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
       fprintf(stderr, "Failed to get gpu dvfc usages\n");
       return;
    }
+   uint64_t total_counter_time;
    info.busy_delta_time = info.busy_time -info.last_busy_time ;
    info.idle_delta_time = info.idle_time -info.last_idle_time ;
    info.protm_delta_time = info.protm_time -info.last_protm_time ;
+   total_counter_time = info.busy_delta_time+info.idle_delta_time;
    info.last_protm_time = info.protm_time;
    info.last_busy_time= info.busy_time;
    info.last_idle_time = info.idle_time;
@@ -732,6 +734,20 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
    info.last_frag_time = info.frag_time;
    info.last_tiler_time = info.tiler_time;
 
+   //if gpu is idle, dvfs will not add both gpu active and non-active counter, busy time and idle time will not change, just report 0.0 usage
+   if(total_counter_time == 0 ||info.busy_delta_time ==0 )
+   {
+      fprintf(stdout, "GPU last render period frequency :  %dMHz\n", info.last_render_freq/1000000);
+      fprintf(stdout, "GPU utilization : %.2f%%\n", 0.0);
+      fprintf(stdout, "GPU protect mode utilization : %.2f%%\n", 0.0);
+      if(!info.no_shader_usage)
+      {
+          fprintf(stdout, "Fragment shader utilization : %.2f%%\n", 0.0);
+          fprintf(stdout, "Non Fragment shader utilization : %.2f%%\n", 0.0);
+          fprintf(stdout, "Tiler utilization : %.2f%%\n", 0.0);
+      }
+      return;
+   }
    fprintf(stdout, "GPU last render period frequency :  %dMHz\n",  info.last_render_freq/1000000);
    fprintf(stdout, "GPU utilization : %.2f%%\n", info.busy_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
    fprintf(stdout, "GPU protect mode utilization : %.2f%%\n", info.protm_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
