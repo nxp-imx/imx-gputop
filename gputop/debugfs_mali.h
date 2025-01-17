@@ -155,7 +155,8 @@ typedef enum
 	bool no_shader_usage;
 
 	char  name[128];
-
+	char  version[128];
+	uint32_t version_major;
 };
 
  struct debugfs_kctx_mem_client {
@@ -190,6 +191,17 @@ struct debugfs_ctx_client {
 	uint32_t gpu_mem_total;
 	uint32_t ctx_gpu_mem_total;
 	struct debugfs_ctx_mem_client mem;
+	uint32_t explict_va_mem;
+	uint32_t explict_commit_mem;
+	uint32_t explict_uncommit_mem;
+
+	uint32_t implict_va_mem;
+	uint32_t implict_commit_mem;
+	uint32_t implict_uncommit_mem;
+
+	uint32_t imported_va_mem;
+	uint32_t imported_commit_mem;
+	uint32_t imported_uncommit_mem;
 
 	/** next client */
 	struct debugfs_ctx_client *next;
@@ -202,7 +214,8 @@ struct debugfs_ctx_client {
 	for (client = head; client != NULL; client = client->next)
 
 int debugfs_get_gpu_kctx(struct debugfs_kctx_client *client, const char *path );
-int debugfs_get_gpu_ctx(struct debugfs_ctx_client *client, const char *path ); 
+int debugfs_get_gpu_ctx(struct debugfs_ctx_client *client, const char *path );
+int debugfs_get_gpu_simple(struct debugfs_ctx_client *client, const char *path );
 int debugfs_get_gpu_usage(struct debugfs_mali_info *info, const char *path);
 int debugfs_get_gpu_meminfo(struct debugfs_kctx_client *kctx_client, struct debugfs_ctx_client *ctx_client);
 

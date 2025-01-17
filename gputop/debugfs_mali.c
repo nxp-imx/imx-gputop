@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <dirent.h>
+#include <ctype.h>
 
 #include "gpuperfcnt/gpuperfcnt_debugfs.h"
 #include "debugfs_mali.h"
@@ -465,13 +466,135 @@ int debugfs_get_gpu_ctx(struct debugfs_ctx_client *clients, const char *path)
    return 0;
 }
 
+int debugfs_get_gpu_simple(struct debugfs_ctx_client *clients, const char *path)
+{
+   FILE *file = NULL;
+   char buf[1024];
+   char buf_ctx[1024];
+   memset(clients, 0, sizeof(*clients));
+   if(get_gpu_ctx_dir(clients)){
+      fprintf(stderr, "Failed to get gpu memory ctx sub directory\n");
+      return -1;
+   }
+   struct debugfs_ctx_client  *curr_client;
+   list_for_each(curr_client, clients->head) {
+   memset(buf_ctx, 0, sizeof(buf_ctx));
+
+   if (!path) {
+      snprintf(buf_ctx, sizeof(buf_ctx), "%s/%s/%s",  "ctx", curr_client->ctx_dir_name,"mem_profile");
+      file = debugfs_fopen(buf_ctx, "r");
+   } else {
+      file = fopen(path, "r");
+   }
+   if (!file){
+     // fprintf(stdout, "Failed to open file %s \n", buf_ctx);
+      continue;
+   }
+   int i= 0, j=0;
+   if((fgets(buf, 128, file)) == NULL)
+   {
+      fprintf(stderr, "Failed to get  process_name\n");
+      return -1;
+   }
+   while(buf[i++] !='(');
+   while (buf[i] !=')')
+   {
+      curr_client->process_name[j++]= buf[i++];
+   }
+   curr_client->process_name[j]= 0;
+   //fprintf(stdout, "fopen file  %s  %s \n", buf_ctx, curr_client->process_name);
+   memset(buf, 0, sizeof(char) * 1024);
+   //parsing meminfo from each application
+   char *line = buf;
+   while (fgets(buf, 1024, file) != NULL) {
+       line = buf;
+      // fprintf(stdout, "read line %s \n", line);
+      if(!strncmp(line, "Explicitly Committed GPU Memory:", strlen("Explicitly Committed GPU Memory:"))){
+          //fprintf(stdout, "%s \n", line);
+          while(fgets(buf, 1024, file) != NULL)
+          {
+              line = buf;
+              while(!isalpha (*line))line++;
+              //fprintf(stdout, "%s \n", line);
+             if(!strncmp(line, "Allocated VA: ", strlen("Allocated VA: "))){
+                //fprintf(stdout, "%s \n", line);
+                line=line+strlen("Allocated VA: ");
+                sscanf(line, "%d", &curr_client->explict_va_mem);
+                curr_client->gpu_mem_total += curr_client->explict_va_mem;
+                clients->gpu_mem_total += curr_client->explict_va_mem;
+                //fprintf(stdout, "Total  allocated VA gpu  memory :%d \n", curr_client->explict_va_mem);
+                continue;
+             }
+             if(!strncmp(line, "Uncommitted: ", strlen("Uncommitted: "))){
+                //fprintf(stdout, "%s \n", line);
+                line=line+strlen("Uncommitted: ");
+                sscanf(line, "%d", &curr_client->explict_uncommit_mem);
+                //fprintf(stdout, "Total  allocated uncommitted  memory :%d \n", curr_client->explict_uncommit_mem);
+                continue;
+             }
+            if(!strncmp(line, "Committed: ", strlen("Committed: "))){
+                //fprintf(stdout, "%s \n", line);
+                line=line+strlen("Committed: ");
+                sscanf(line, "%d", &curr_client->explict_commit_mem);
+               //fprintf(stdout, "Total  allocated gpu  commited memory :%d \n", curr_client->explict_commit_mem);
+                break;
+            }
+         }
+         continue;
+      }
+   //fprintf(stdout, " %s \n", line);
+      if(!strncmp(line, "Implicitly Committed GPU Memory:", strlen("Implicitly Committed GPU Memory:"))){
+          if(fgets(buf, 1024, file) != NULL)
+          {
+             line=buf;
+             while(!isalpha (*line))line++;
+            // fprintf(stdout, "read line %s \n", line);
+             if(!strncmp(line, "Allocated VA: ", strlen("Allocated VA: "))){
+                line=line+strlen("Allocated VA: ");
+                sscanf(line, "%d", &curr_client->implict_va_mem);
+                curr_client->gpu_mem_total += curr_client->implict_va_mem;
+                clients->gpu_mem_total += curr_client->implict_va_mem;
+             //fprintf(stdout, "Total  allocated gpu  memory :%d \n", curr_client->ctx_gpu_mem_total);
+             }
+          }
+          continue;
+      }
+      if(!strncmp(line, "Imported GPU Memory:", strlen("Imported GPU Memory:"))){
+         if(fgets(buf, 1024, file) != NULL)
+         {
+            line=buf;
+            while(!isalpha (*line))line++;
+          //  fprintf(stdout, "read line %s \n", line);
+            if(!strncmp(line, "Allocated VA: ", strlen("Allocated VA: "))){
+               line=line+strlen("Allocated VA: ");
+               sscanf(line, "%d", &curr_client->imported_va_mem);
+               curr_client->gpu_mem_total += curr_client->imported_va_mem;
+               clients->gpu_mem_total += curr_client->imported_va_mem;
+             //fprintf(stdout, "Total  allocated gpu  memory :%d \n", curr_client->ctx_gpu_mem_total);
+            }
+         }
+      break;
+      }
+   }
+   fclose(file);
+   }
+
+   return 0;
+}
+
 
 int debugfs_get_gpu_meminfo(struct debugfs_kctx_client *kctx_client, struct debugfs_ctx_client *ctx_client)
 {
    if(debugfs_get_gpu_kctx(kctx_client, NULL))
       return -1;
-   if(debugfs_get_gpu_ctx(ctx_client, NULL))
-      return -1;
+   if(info.version_major < 52){
+      if(debugfs_get_gpu_ctx(ctx_client, NULL))
+         return -1;
+   }
+   else {
+      if(debugfs_get_gpu_simple(ctx_client, NULL))
+         return -1;
+   }
    return 0;
 }
 
@@ -577,13 +700,48 @@ void debugfs_free_ctx_clients(struct debugfs_ctx_client *ctx_clients){
    memset(ctx_clients, 0, sizeof(*ctx_clients));
 }
 
+static void display_simple_memprofile_info(struct debugfs_ctx_client *clients){
+   FILE *file = NULL;
+   char buf[1024];
+   char buf_ctx[1024];
+   if(clients->gpu_mem_total != 0){
+      //fprintf(stdout, "\n");
+      fprintf(stdout, "gpu user space  Mem: %d kB total\n", clients->gpu_mem_total/1024);
+      fprintf(stdout, "\n");
+   }
+   struct debugfs_ctx_client  *curr_client;
+   list_for_each(curr_client, clients->head) {
+      snprintf(buf_ctx, sizeof(buf_ctx), "%s/%s/%s",  "ctx", curr_client->ctx_dir_name,"mem_profile");
+      file = debugfs_fopen(buf_ctx, "r");
+      if (!file){
+        //fprintf(stdout, "Failed to open file %s \n", buf_ctx);
+         continue;
+       }
+      if(fgets(buf, 128, file) == NULL) return;  //skip process name
+      char *line = buf;
+      fprintf(stdout, "PID %d  %s\n",curr_client->PID, curr_client->process_full_path_name);
+      fprintf(stdout, "user space Mem: %d kB total\n", curr_client->gpu_mem_total/1024);
+      fprintf(stdout, "user space Explicit VA Mem: %d kB total\n", curr_client->explict_va_mem/1024);
+      fprintf(stdout, "user space Implicit commited Mem: %d kB total\n", curr_client->implict_va_mem/1024);
+      fprintf(stdout, "user space Imported Mem: %d kB total\n", curr_client->imported_va_mem/1024);
+      while ((fgets(buf, 1024, file)) != NULL) {
+         line=strchr(buf, ':');
+         if(line == NULL) continue;
+         if (*(line+2) != '0')
+            fprintf(stdout, "%s",buf);
+      }
+      fprintf(stdout, "\n");
+   }
+
+}
+
 static void display_mali_debugfs_ctx_info(struct debugfs_ctx_client *clients){
    struct debugfs_ctx_client  *curr_client;
    int i;
 
    if(clients->ctx_mem_total != 0)
       fprintf(stdout, "class Mem: %d bytes  total ", clients->ctx_mem_total);
-   if(clients->ctx_mem_total != 0)
+   if(clients->gpu_mem_total != 0)
       fprintf(stdout, "     allocated gpu Mem: %d bytes total \n", clients->gpu_mem_total);
 
    list_for_each(curr_client, clients->head) {
@@ -607,11 +765,91 @@ static void display_mali_debugfs_ctx_info(struct debugfs_ctx_client *clients){
    }
 }
 
+static void display_simple_memprofile_mem(void){
+   struct debugfs_ctx_client  ctx_clients;
+   if(debugfs_get_gpu_simple(&ctx_clients, NULL)){
+      fprintf(stderr, "Failed to get gpu simple profile memory\n");
+      return;
+   }
+   struct debugfs_ctx_client  *clients = &ctx_clients;
+   if(clients->gpu_mem_total != 0){
+     // fprintf(stdout, "\n");
+         fprintf(stdout, "gpu user space Mem: %d kB total\n", clients->gpu_mem_total/1024);
+         fprintf(stdout, "\n");
+         fprintf(stdout, "%s", underlined_color);
+      if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS))
+            fprintf(stdout, " %7s %6s%15s%16s%14s%16s%14s %16s %16s\n",
+               "PID", "CTX",  "Total(kB)",  "Explicit(kB)", "Commited(kB)", "UnCommited(kB)", "Implicit(kB)", "Imported(kB)","         CMD                                                     ");
+         else
+            fprintf(stdout, " %7s%15s%16s%14s%16s%14s %16s %16s\n",
+                "PID", "Total(kB)",  "Explicit(kB)", "Commited(kB)", "UnCommited(kB)", "Implicit(kB)", "Imported(kB)","         CMD                                                      ");
+      }
+      struct debugfs_ctx_client  *curr_ctx_client;
+      fprintf(stdout, "%s", regular_color);
+
+      list_for_each(curr_ctx_client, clients->head) {
+         if(curr_ctx_client->gpu_mem_total == 0)
+            continue;
+         fprintf(stdout, "%1s%7u%1s", "",
+               curr_ctx_client->PID, "");
+         if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS))
+            fprintf(stdout, "%1s%5u", "",
+               curr_ctx_client->CTX);
+         fprintf(stdout, "%3s%8"PRIu32"%7s%8"PRIu32"%8s%8"PRIu32"%6s%8"PRIu32"%8s%8"PRIu32"%8s%8"PRIu32,
+               "", curr_ctx_client->gpu_mem_total / (1024),
+               "", curr_ctx_client->explict_va_mem / (1024),
+               "", curr_ctx_client->explict_commit_mem / (1024),
+               "", curr_ctx_client->explict_uncommit_mem / (1024),
+               "", curr_ctx_client->implict_va_mem / (1024),
+               "", curr_ctx_client->imported_va_mem / (1024)
+         );
+         fprintf(stdout, "             %s", curr_ctx_client->process_name);
+         fprintf(stdout, "\n");
+      }
+   debugfs_free_ctx_clients(&ctx_clients);
+}
+
+static int get_gpu_release_version(void)
+{
+   static int version = 0;
+   FILE *file = NULL;
+   char buf[1024];
+   char *line = buf;
+   if(version!= 0)
+      return version;
+   file = fopen("/sys/module/mali_kbase/version", "r");
+   if (!file){
+      fprintf(stderr, "Failed to open mali version file\n");
+      return -1;
+   }
+   memset(buf, 0, sizeof(char) * 1024);
+   int err;
+   if( fgets(buf, 1024, file) != NULL){
+      err = sscanf(line, "%s\n", info.version);
+      if(err !=1){
+         fprintf(stderr, "Failed to sscanf mali kbase version\n");
+         return -1;
+      }
+   }
+   line++;
+   while(*line !='p'){
+      version=version*10+(*line -'0');
+       line=line+1;
+   }
+   fclose(file);
+   return version;
+
+}
+
 void gtop_display_mali_debugfs_info(void){
    struct debugfs_kctx_client  kctx_clients;
    struct debugfs_ctx_client  ctx_clients;
 
-// struct debugfs_ctx_client *ctx_client;
+   info.version_major = get_gpu_release_version();
+   fprintf(stdout, "GPU Mali driver version: %s\n", info.version);
+   fprintf(stdout, "\n");
+
+   //fprintf(stdout, "gpu mali release version %d \n",info.version_major);
    if(debugfs_get_gpu_usage(&info, NULL)){
       fprintf(stderr, "Failed to get gpu dvfc usages\n");
       return;
@@ -632,54 +870,57 @@ void gtop_display_mali_debugfs_info(void){
    fprintf(stdout, "gpu kernel Mem: %dKB total\n", info.total_mem_used*4);
    debugfs_free_kctx_clients(&kctx_clients);
 
-   if(debugfs_get_gpu_ctx(&ctx_clients, NULL)){
-      fprintf(stderr, "Failed to get gpu ctx memory\n");
-      return;
-   }
-   struct debugfs_ctx_client  *clients = &ctx_clients;
-   if(clients->ctx_mem_total != 0){
-      fprintf(stdout, "\n");
-      fprintf(stdout, "class Mem: %d kB total    ", clients->ctx_mem_total/1024);
-      fprintf(stdout, "allocated gpu Mem: %d kB total\n", clients->gpu_mem_total/1024);
-      fprintf(stdout, "%s", underlined_color);
-      if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS))
-         fprintf(stdout, " %7s %7s%16s %20s %22s\n",
-            "PID", "CTX",  "Class MEM(kB)",  "   Allocated GPU MEM(kB)", "      CMD                                                                   ");
-      else
-         fprintf(stdout, " %7s %16s %20s %22s\n",
-            "PID",  "Class MEM(kB)",  "   Allocated GPU MEM(kB)", "      CMD                                                                   ");
-   }
-   struct debugfs_ctx_client  *curr_ctx_client;
-   fprintf(stdout, "%s", regular_color);
+   if(info.version_major < 52){
+      if(debugfs_get_gpu_ctx(&ctx_clients, NULL)){
+         fprintf(stderr, "Failed to get gpu ctx memory\n");
+         return;
+      }
+      struct debugfs_ctx_client  *clients = &ctx_clients;
+      if(clients->ctx_mem_total != 0 || clients->gpu_mem_total != 0){
+         fprintf(stdout, "\n");
+         fprintf(stdout, "class Mem: %d kB total    ", clients->ctx_mem_total/1024);
+         fprintf(stdout, "allocated gpu Mem: %d kB total\n", clients->gpu_mem_total/1024);
+         fprintf(stdout, "%s", underlined_color);
+         if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS))
+            fprintf(stdout, " %7s %7s%16s %20s %22s\n",
+               "PID", "CTX",  "Class MEM(kB)",  "   Allocated GPU MEM(kB)", "      CMD                                                                   ");
+         else
+            fprintf(stdout, " %7s %16s %20s %22s\n",
+               "PID",  "Class MEM(kB)",  "   Allocated GPU MEM(kB)", "      CMD                                                                   ");
+      }
+      struct debugfs_ctx_client  *curr_ctx_client;
+      fprintf(stdout, "%s", regular_color);
 
-   list_for_each(curr_ctx_client, clients->head) {
-      if((curr_ctx_client->mem).class_mem_total == 0)
-         continue;
-      fprintf(stdout, "%1s%7u%1s", "",
-            curr_ctx_client->PID, "");
-      if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS))
+      list_for_each(curr_ctx_client, clients->head) {
+         if((curr_ctx_client->mem).class_mem_total == 0)
+            continue;
          fprintf(stdout, "%1s%7u%1s", "",
-            curr_ctx_client->CTX, "");
-      fprintf(stdout, "%3s%8"PRIu32"%12s%8"PRIu32,
-            "", (curr_ctx_client->mem).class_mem_total / (1024), 
-            "", curr_ctx_client->ctx_gpu_mem_total / (1024));
-      if(curr_ctx_client->process_full_path_name[0] == '/')
-         fprintf(stdout, "                  %s", strrchr(curr_ctx_client->process_full_path_name, '/')+1);
-      else
-         fprintf(stdout, "                  %s", curr_ctx_client->process_full_path_name);
-      fprintf(stdout, "\n");
-      
+               curr_ctx_client->PID, "");
+         if (FLAG_IS_SET(flags, FLAG_SHOW_CONTEXTS))
+            fprintf(stdout, "%1s%7u%1s", "",
+               curr_ctx_client->CTX, "");
+         fprintf(stdout, "%3s%8"PRIu32"%12s%8"PRIu32,
+               "", (curr_ctx_client->mem).class_mem_total / (1024),
+               "", curr_ctx_client->ctx_gpu_mem_total / (1024));
+         if(curr_ctx_client->process_full_path_name[0] == '/')
+            fprintf(stdout, "                  %s", strrchr(curr_ctx_client->process_full_path_name, '/')+1);
+         else
+            fprintf(stdout, "                  %s", curr_ctx_client->process_full_path_name);
+         fprintf(stdout, "\n");
+      }
+      debugfs_free_ctx_clients(&ctx_clients);
    }
-
+   else {
+      display_simple_memprofile_mem();
+   }
    //display_mali_debugfs_ctx_info(&ctx_clients);
-   debugfs_free_ctx_clients(&ctx_clients);
+   //debugfs_free_ctx_clients(&ctx_clients);
 }
 
 void gtop_display_mali_debugfs_ktx_info(void){
    //struct debugfs_mali_info info;
    struct debugfs_kctx_client  kctx_clients;
    struct debugfs_kctx_client  *curr_client;
-   memset(&info, 0, sizeof(info));
 
    if(debugfs_get_gpu_kctx(&kctx_clients, NULL)){
       fprintf(stderr, "Failed to get gpu memory\n");
@@ -701,12 +942,25 @@ void gtop_display_mali_debugfs_pid_mem_info(void){
    struct debugfs_ctx_client  ctx_clients;
 
    fprintf(stdout, "\n");
-   if(debugfs_get_gpu_ctx(&ctx_clients, NULL)){
-      fprintf(stderr, "Failed to get gpu ctx memory\n");
-      return;
+   if(info.version_major < 52){
+
+      if(debugfs_get_gpu_ctx(&ctx_clients, NULL)){
+         fprintf(stderr, "Failed to get gpu ctx memory\n");
+         return;
+      }
+
+      display_mali_debugfs_ctx_info(&ctx_clients);
+   }
+   else{
+
+      if(debugfs_get_gpu_simple(&ctx_clients, NULL)){
+         fprintf(stderr, "Failed to get gpu ctx memory\n");
+         return;
+      }
+
+      display_simple_memprofile_info(&ctx_clients);
    }
 
-   display_mali_debugfs_ctx_info(&ctx_clients);
    debugfs_free_ctx_clients(&ctx_clients);
 }
 
