@@ -250,7 +250,7 @@ const char* get_gpu_name(
     for (const auto& entry : PRODUCT_VERSIONS)
     {
         if(((gpu_id & entry.mask) == entry.id) &&
-           (core_count >= entry.min_cores))
+           (core_count >= static_cast<int>(entry.min_cores)))
         {
             return entry.name;
         }
@@ -282,7 +282,7 @@ int get_num_exec_engines(
     for (const auto& entry : PRODUCT_VERSIONS)
     {
         if(((gpu_id & entry.mask) == entry.id) &&
-           (core_count >= entry.min_cores))
+           (core_count >= static_cast<int>(entry.min_cores)))
         {
             return entry.get_num_exec_engines(core_count, core_features, thread_features);
         }
@@ -291,7 +291,7 @@ int get_num_exec_engines(
     return 0;
 }
 
-const uint32_t get_num_fp32_fmas(
+uint32_t get_num_fp32_fmas(
     uint32_t gpu_id,
     int core_count,
     uint32_t core_features,
@@ -300,7 +300,7 @@ const uint32_t get_num_fp32_fmas(
     for (const auto& entry : PRODUCT_VERSIONS)
     {
         if(((gpu_id & entry.mask) == entry.id) &&
-           (core_count >= entry.min_cores))
+           (core_count >= static_cast<int>(entry.min_cores)))
         {
             return entry.get_num_fp32_fmas_per_engine(core_count, core_features, thread_features) *
                    entry.get_num_exec_engines(core_count, core_features, thread_features);
@@ -310,7 +310,7 @@ const uint32_t get_num_fp32_fmas(
     return 0;
 }
 
-const uint32_t get_num_texels(
+uint32_t get_num_texels(
     uint32_t gpu_id,
     int core_count,
     uint32_t core_features,
@@ -319,7 +319,7 @@ const uint32_t get_num_texels(
     for (const auto& entry : PRODUCT_VERSIONS)
     {
         if(((gpu_id & entry.mask) == entry.id) &&
-           (core_count >= entry.min_cores))
+           (core_count >= static_cast<int>(entry.min_cores)))
         {
             return entry.get_num_texels(core_count, core_features, thread_features);
         }
@@ -328,7 +328,7 @@ const uint32_t get_num_texels(
     return 0;
 }
 
-const uint32_t get_num_pixels(
+uint32_t get_num_pixels(
     uint32_t gpu_id,
     int core_count,
     uint32_t core_features,
@@ -337,7 +337,7 @@ const uint32_t get_num_pixels(
     for (const auto& entry : PRODUCT_VERSIONS)
     {
         if(((gpu_id & entry.mask) == entry.id) &&
-           (core_count >= entry.min_cores))
+           (core_count >= static_cast<int>(entry.min_cores)))
         {
             return entry.get_num_pixels(core_count, core_features, thread_features);
         }
