@@ -150,9 +150,34 @@ typedef enum
 	uint64_t frag_delta_time;
 	uint64_t compute_delta_time;
 	uint64_t tiler_delta_time;
+
+	uint64_t mcu_time;
+	uint64_t idvs_time;
+	uint64_t ceu_time;
+	uint64_t last_mcu_time;
+	uint64_t last_idvs_time;
+	uint64_t last_ceu_time;
+	uint64_t mcu_delta_time;
+	uint64_t idvs_delta_time;
+	uint64_t ceu_delta_time;
+
+	uint64_t lsu_time;
+	uint64_t l2_ext_read_time;
+	uint64_t l2_ext_write_time;
+	uint64_t last_lsu_time;
+	uint64_t last_l2_ext_read_time;
+	uint64_t last_l2_ext_write_time;
+	uint64_t lsu_delta_time;
+	uint64_t l2_ext_read_delta_time;
+	uint64_t l2_ext_write_delta_time;
+	uint64_t frag_core_time;
+	uint64_t last_frag_core_time;
+	uint64_t frag_core_delta_time;
+
 	uint32_t total_mem_used;
 	uint32_t last_render_freq;
 	bool no_shader_usage;
+	bool no_mcu_usage;
 
 	char  name[128];
 	char  version[128];

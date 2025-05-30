@@ -647,9 +647,28 @@ int debugfs_get_gpu_usage(struct debugfs_mali_info *info, const char *path)
     }
     else info->no_shader_usage=true;
       //fprintf(stdout, "busy time %d and idle time %d\n", info->busy_time, info->idle_time);
-      fclose(file);
+    if( fgets(buf, 1024, file) != NULL){
+         err = sscanf(line, "%s %"PRIu64" %s  %" PRIu64" %s  %"PRIu64" %s  %"PRIu64"\n",name,
+                     &info->mcu_time, name1, &info->idvs_time, name2, &info->ceu_time, name3, &info->lsu_time);
+         if(err != 8){
+             fprintf(stderr, "Failed to sscanf usage\n");
+            return -1;
+            }
+         info->no_mcu_usage = false;
+    }
+    else info->no_mcu_usage=true;
+
+    if( fgets(buf, 1024, file) != NULL){
+       err = sscanf(line, "%s %"PRIu64" %s %" PRIu64" %s %"PRIu64"\n",name3, &info->l2_ext_read_time, name4,
+                   &info->l2_ext_write_time, name5, &info->frag_core_time);
+       if(err != 6){
+           fprintf(stderr, "Failed to sscanf usage\n");
+          return -1;
+          }
+    }
    }
    else fprintf(stderr, "Failed to fget dvfs usage\n");
+   fclose(file);
    file = fopen("/sys/kernel/debug/clk/gpu/clk_rate", "r");
 
    if (!file){
@@ -844,12 +863,27 @@ static int get_gpu_release_version(void)
 void gtop_display_mali_debugfs_info(void){
    struct debugfs_kctx_client  kctx_clients;
    struct debugfs_ctx_client  ctx_clients;
+   char buf[1024];
+   char *line;
+   FILE *file = NULL;
 
    info.version_major = get_gpu_release_version();
    fprintf(stdout, "GPU Mali driver version: %s\n", info.version);
    fprintf(stdout, "\n");
 
-   //fprintf(stdout, "gpu mali release version %d \n",info.version_major);
+   file = debugfs_fopen("active_groups", "r");
+   if( fgets(buf, 1024, file) != NULL){
+      line = buf + strlen("CSF active groups status (version: ");
+      while(*(++line) != ')');
+      *line = 0;
+      fprintf(stdout, "GPU Mali firmware version: %s\n", buf+strlen("CSF active groups status (version: "));
+      fprintf(stdout, "\n");
+      }
+   else{
+      fprintf(stderr, "Failed to get mali active group\n");
+      return;
+      }
+
    if(debugfs_get_gpu_usage(&info, NULL)){
       fprintf(stderr, "Failed to get gpu dvfc usages\n");
       return;
@@ -988,6 +1022,25 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
    info.last_frag_time = info.frag_time;
    info.last_tiler_time = info.tiler_time;
 
+   info.mcu_delta_time = info.mcu_time -info.last_mcu_time ;
+   info.idvs_delta_time = info.idvs_time -info.last_idvs_time ;
+   info.ceu_delta_time = info.ceu_time -info.last_ceu_time ;
+   info.last_mcu_time = info.mcu_time;
+   info.last_idvs_time= info.idvs_time;
+   info.last_ceu_time = info.ceu_time;
+
+   info.lsu_delta_time = info.lsu_time -info.last_lsu_time ;
+   info.frag_core_delta_time = info.frag_core_time -info.last_frag_core_time ;
+   info.l2_ext_read_delta_time = info.l2_ext_read_time -info.last_l2_ext_read_time ;
+   info.l2_ext_write_delta_time = info.l2_ext_write_time -info.last_l2_ext_write_time ;
+
+
+   info.last_lsu_time= info.lsu_time;
+   info.last_frag_core_time = info.frag_core_time;
+   info.last_l2_ext_read_time = info.l2_ext_read_time;
+   info.last_l2_ext_write_time = info.l2_ext_write_time;
+
+
    //if gpu is idle, dvfs will not add both gpu active and non-active counter, busy time and idle time will not change, just report 0.0 usage
    if(total_counter_time == 0 ||info.busy_delta_time ==0 )
    {
@@ -999,6 +1052,19 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
           fprintf(stdout, "Fragment shader utilization : %.2f%%\n", 0.0);
           fprintf(stdout, "Non Fragment shader utilization : %.2f%%\n", 0.0);
           fprintf(stdout, "Tiler utilization : %.2f%%\n", 0.0);
+      }
+      if(!info.no_mcu_usage)
+      {
+         fprintf(stdout, "Shader core utilization : %.2f%%\n", 0.0);
+         if( total_counter_time)
+            fprintf(stdout, "MCU utilization : %.2f%%\n",(info.mcu_delta_time)*100.0/(info.busy_delta_time+info.idle_delta_time));
+         else
+            fprintf(stdout, "MCU utilization : %.2f%%\n", 0.0);
+         fprintf(stdout, "IDVS utilization : %.2f%%\n", 0.0);
+         fprintf(stdout, "LSU utilization : %.2f%%\n", 0.0);
+         fprintf(stdout, "CEU utilization : %.2f%%\n",0.0);
+         fprintf(stdout, "L2 EXT Read utilization : %.2f%%\n", 0.0);
+         fprintf(stdout, "L2 EXT Write utilization : %.2f%%\n", 0.0);
       }
       return;
    }
@@ -1012,6 +1078,18 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
       fprintf(stdout, "Non Fragment shader utilization : %.2f%%\n",(info.compute_delta_time)*100.0/(info.busy_delta_time+info.idle_delta_time));
       fprintf(stdout, "Tiler utilization : %.2f%%\n", info.tiler_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
    }
+
+   if(!info.no_mcu_usage)
+   {
+      fprintf(stdout, "Shader core utilization : %.2f%%\n", info.frag_core_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "MCU utilization : %.2f%%\n",(info.mcu_delta_time)*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "IDVS utilization : %.2f%%\n", info.idvs_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "LSU utilization : %.2f%%\n", info.lsu_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "CEU utilization : %.2f%%\n",(info.ceu_delta_time)*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "L2 EXT Read utilization : %.2f%%\n", info.l2_ext_read_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "L2 EXT Write utilization : %.2f%%\n", info.l2_ext_write_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+   }
+
 }
 
 #endif
