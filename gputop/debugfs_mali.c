@@ -660,7 +660,7 @@ int debugfs_get_gpu_usage(struct debugfs_mali_info *info, const char *path)
 
     if( fgets(buf, 1024, file) != NULL){
        err = sscanf(line, "%s %"PRIu64" %s %" PRIu64" %s %"PRIu64"\n",name3, &info->l2_ext_read_time, name4,
-                   &info->l2_ext_write_time, name5, &info->frag_core_time);
+                   &info->l2_ext_write_time, name5, &info->frag_starving_time);
        if(err != 6){
            fprintf(stderr, "Failed to sscanf usage\n");
           return -1;
@@ -1030,13 +1030,13 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
    info.last_ceu_time = info.ceu_time;
 
    info.lsu_delta_time = info.lsu_time -info.last_lsu_time ;
-   info.frag_core_delta_time = info.frag_core_time -info.last_frag_core_time ;
+   info.frag_starving_delta_time = info.frag_starving_time -info.last_frag_starving_time ;
    info.l2_ext_read_delta_time = info.l2_ext_read_time -info.last_l2_ext_read_time ;
    info.l2_ext_write_delta_time = info.l2_ext_write_time -info.last_l2_ext_write_time ;
 
 
    info.last_lsu_time= info.lsu_time;
-   info.last_frag_core_time = info.frag_core_time;
+   info.last_frag_starving_time = info.frag_starving_time;
    info.last_l2_ext_read_time = info.l2_ext_read_time;
    info.last_l2_ext_write_time = info.l2_ext_write_time;
 
@@ -1055,7 +1055,7 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
       }
       if(!info.no_mcu_usage)
       {
-         fprintf(stdout, "Shader core utilization : %.2f%%\n", 0.0);
+         fprintf(stdout, "Fragment Shader Starving : %.2f%%\n", 0.0);
          if( total_counter_time)
             fprintf(stdout, "MCU utilization : %.2f%%\n",(info.mcu_delta_time)*100.0/(info.busy_delta_time+info.idle_delta_time));
          else
@@ -1081,7 +1081,7 @@ void gtop_display_mali_debugfs_dvfs_utilization_info()
 
    if(!info.no_mcu_usage)
    {
-      fprintf(stdout, "Shader core utilization : %.2f%%\n", info.frag_core_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
+      fprintf(stdout, "Fragment Shader Starving : %.2f%%\n", info.frag_starving_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
       fprintf(stdout, "MCU utilization : %.2f%%\n",(info.mcu_delta_time)*100.0/(info.busy_delta_time+info.idle_delta_time));
       fprintf(stdout, "IDVS utilization : %.2f%%\n", info.idvs_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));
       fprintf(stdout, "LSU utilization : %.2f%%\n", info.lsu_delta_time*100.0/(info.busy_delta_time+info.idle_delta_time));

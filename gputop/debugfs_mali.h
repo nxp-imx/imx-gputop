@@ -170,9 +170,9 @@ typedef enum
 	uint64_t lsu_delta_time;
 	uint64_t l2_ext_read_delta_time;
 	uint64_t l2_ext_write_delta_time;
-	uint64_t frag_core_time;
-	uint64_t last_frag_core_time;
-	uint64_t frag_core_delta_time;
+	uint64_t frag_starving_time;
+	uint64_t last_frag_starving_time;
+	uint64_t frag_starving_delta_time;
 
 	uint32_t total_mem_used;
 	uint32_t last_render_freq;
