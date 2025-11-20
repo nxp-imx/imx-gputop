@@ -2,23 +2,23 @@
   "SPDXID": "SPDXRef-DOCUMENT",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2025-08-24T08:08:00Z",
+    "created": "2025-11-12T06:54:40Z",
     "creators": [
       "Organization: NXP"
     ],
     "licenseListVersion": "3.20"
   },
-  "name": "imx-gputop-LF_6.12.34_2.1.0",
+  "name": "imx-gputop-LF_6.12.49_2.2.0",
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://nxp.com/spdx/0ba69c21-d2e8-4dad-a31f-ef331d8ebe50",
+  "documentNamespace": "https://nxp.com/spdx/5b60d4ed-3a57-462f-8796-f8cb12990e27",
   "packages": [
     {
-      "SPDXID": "SPDXRef-package-0ba69c21-d2e8-4dad-a31f-ef331d8ebe50",
+      "SPDXID": "SPDXRef-package-5b60d4ed-3a57-462f-8796-f8cb12990e27",
       "name": "imx-gputop",
-      "versionInfo": "LF_6.12.34_2.1.0",
+      "versionInfo": "LF_6.12.49_2.2.0",
       "licenseConcluded": "(MIT)",
       "licenseDeclared": "(MIT)",
-      "downloadLocation": "https://github.com/nxp-imx/imx-gputop -b lf-6.12.34-2.1.0",
+      "downloadLocation": "https://github.com/nxp-imx/imx-gputop -b lf-6.12.49-2.2.0",
       "originator": "Organization: imx-gputop",
       "supplier": "NOASSERTION",
       "externalRefs": [],
@@ -29,7 +29,7 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
-      "relatedSpdxElement": "SPDXRef-package-0ba69c21-d2e8-4dad-a31f-ef331d8ebe50"
+      "relatedSpdxElement": "SPDXRef-package-5b60d4ed-3a57-462f-8796-f8cb12990e27"
     }
   ]
 }
