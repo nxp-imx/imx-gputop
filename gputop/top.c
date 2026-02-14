@@ -1956,8 +1956,8 @@ gtop_check_keyboard(struct perf_device *dev)
 
 #if defined HAVE_DDR_PERF && (defined __linux__ || defined __ANDROID__ || defined ANDROID)
 	/* disable reading DDR perf PMUs */
-	if ((curr_page != PAGE_SHOW_CLIENTS ||
-	     curr_page != PAGE_DDR_PERF) && perf_ddr_enabled) {
+	if (!(curr_page == PAGE_SHOW_CLIENTS ||
+	      curr_page == PAGE_DDR_PERF) && perf_ddr_enabled) {
 		gtop_disable_pmus();
 		perf_ddr_enabled = 0;
 	}
