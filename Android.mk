@@ -1,4 +1,7 @@
 LOCAL_PATH := $(call my-dir)
+
+ifeq ($(HAVE_FSL_IMX_GPU3D),true)
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := gpu-top
@@ -39,3 +42,5 @@ endif
 LOCAL_VENDOR_MODULE  := true
 LOCAL_MODULE_TAGS    := optional
 include $(BUILD_EXECUTABLE)
+
+endif
