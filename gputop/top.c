@@ -688,6 +688,7 @@ gtop_set_perf_pmus_ddr(void)
            memcpy((char *)perf_pmu_ddrs, (char *)perf_pmu_axid_ddrs, sizeof(perf_pmu_axid_ddrs));
         }
     }
+	fclose(file);
 }
 
 static void
@@ -907,7 +908,7 @@ gtop_display_clients(struct perf_device *dev, struct gtop_hw_drv_info *ginfo)
 
 	/* get all the contexts once to speed up display */
 	if (debugfs_get_contexts(&clients, NULL) < 0) {
-		return;
+		goto skip;
 	}
 
 #if defined HAVE_DDR_PERF && (defined __linux__ || defined __ANDROID__ || defined ANDROID)

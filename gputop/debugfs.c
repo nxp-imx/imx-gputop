@@ -396,6 +396,8 @@ debugfs_get_current_clients(struct debugfs_client *clients, const char *path)
 
 		/* it could be we have garbage in clients */
 		if (err != 2) {
+			if (client->name)
+				free(client->name);
 			free(client);
 			continue;
 		}
@@ -496,8 +498,10 @@ debugfs_get_gpu_clocks(struct debugfs_clock *clocks, const char *path)
 	}
 
 	/* verify that we got data */
-	if (clocks->gpu_core_0 == 0 || clocks->shader_core_0 == 0)
+	if (clocks->gpu_core_0 == 0 || clocks->shader_core_0 == 0) {
+		fclose(file);
 		return -1;
+	}
 
 	fclose(file);
 
@@ -602,6 +606,9 @@ debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
 			/* go to next line */
 			continue;
 		}
+
+		if (naming_mode)
+			free(naming_mode);
 
 		/* now we need to find out which one of those we are currently running */
 		if (!strncmp(line, "Currently", 9)) {
