@@ -582,6 +582,12 @@ debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
 				return -1;
 			}
 
+			if (__governor_index >= modes) {
+				if (naming_mode)
+					free(naming_mode);
+				continue;
+			}
+
 			__governor[__governor_index].gpu_core_freq = core_clock_freq;
 			__governor[__governor_index].shader_core_freq = shader_clock_freq;
 
