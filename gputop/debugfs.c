@@ -128,6 +128,7 @@ debugfs_get_contexts(struct debugfs_client *clients, const char *path)
 					client->ctx = calloc(512, sizeof(uint32_t));
 				}
 
+				assert(client->ctx != NULL);
 				client->ctx[client->ctx_no++] = no;
 			}
 		}
@@ -214,6 +215,7 @@ debugfs_get_current_ctx(struct debugfs_client *client, const char *path)
 
 				assert(__nr < 10);
 
+				assert(client->ctx != NULL);
 				client->ctx[__nr] = no;
 				__nr++;
 			}
@@ -391,6 +393,7 @@ debugfs_get_current_clients(struct debugfs_client *clients, const char *path)
 
 		client = calloc(1, sizeof(*client));
 
+		assert(client != NULL);
 		client->name = calloc(512, sizeof(char));
 		err = sscanf(line, "%d  %[a-zA-Z0-9-]s\n", &client->pid, client->name);
 
@@ -551,6 +554,7 @@ debugfs_get_current_gpu_governor(struct debugfs_govern *governor)
 		}
 
 		assert(modes != 0);
+		assert(__governor != NULL);
 
 		/* overdrive:      core_clk frequency: 800000000   shader_clk frequency: 1000000000	 */
 		char *naming_mode = calloc(1024, sizeof(char));

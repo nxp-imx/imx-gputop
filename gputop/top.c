@@ -1985,6 +1985,7 @@ gtop_retrieve_perf_counters(struct perf_device *dev, bool batch)
 
 	gtop.perf_data = calloc(2, sizeof(struct gtop_data));
 
+	assert(gtop.perf_data != NULL);
 	gtop.perf_data[VIV_PROF_COUNTER_PART1] = 
 		gtop_data_create(VIV_PROF_COUNTER_PART1, num_perf_counters_part1, 0);
 	gtop.perf_data[VIV_PROF_COUNTER_PART2] =
