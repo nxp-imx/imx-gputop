@@ -2,24 +2,37 @@
   "SPDXID": "SPDXRef-DOCUMENT",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2025-11-12T06:54:40Z",
+    "created": "2026-06-02T02:45:10Z",
     "creators": [
       "Organization: NXP"
     ],
-    "licenseListVersion": "3.20"
+    "licenseListVersion": "3.26"
   },
-  "name": "imx-gputop-LF_6.12.49_2.2.0",
+  "name": "imx-gputop-lf-6.18.20-2.0.0",
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://nxp.com/spdx/5b60d4ed-3a57-462f-8796-f8cb12990e27",
+  "documentNamespace": "https://nxp.com/spdx/e1c2812c-12b9-4585-9a8a-9471a86e31b6",
   "packages": [
     {
-      "SPDXID": "SPDXRef-package-5b60d4ed-3a57-462f-8796-f8cb12990e27",
+      "SPDXID": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6",
       "name": "imx-gputop",
-      "versionInfo": "LF_6.12.49_2.2.0",
-      "licenseConcluded": "(MIT)",
-      "licenseDeclared": "(MIT)",
-      "downloadLocation": "https://github.com/nxp-imx/imx-gputop -b lf-6.12.49-2.2.0",
-      "originator": "Organization: imx-gputop",
+      "versionInfo": "lf-6.18.20-2.0.0",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "downloadLocation": "https://github.com/nxp-imx/imx-gputop -b lf-6.18.20-2.0.0",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6---d1c06607-93d1-4404-bfce-8ecda9a15022",
+      "name": "Mali Bifrost GPU Kernel Driver",
+      "versionInfo": "r39p0-01eac0",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "homepage": "https://developer.arm.com/downloads/-/mali-drivers/bifrost-kernel",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: Mali Bifrost GPU Kernel Driver",
       "supplier": "NOASSERTION",
       "externalRefs": [],
       "filesAnalyzed": false
@@ -29,7 +42,12 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
-      "relatedSpdxElement": "SPDXRef-package-5b60d4ed-3a57-462f-8796-f8cb12990e27"
+      "relatedSpdxElement": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6---d1c06607-93d1-4404-bfce-8ecda9a15022"
     }
   ]
 }
