@@ -55,4 +55,7 @@ void gtop_display_mali_debugfs_pid_mem_info(void);
 void gtop_display_mali_debugfs_dvfs_utilization_info(void);
 void gtop_set_display_flags(enum flags_type flag);
 
+int gtop_enable_gpu_profile(const char *path);
+int gtop_disable_gpu_profile(const char *path);
+
 #endif /* end _MALI_H */

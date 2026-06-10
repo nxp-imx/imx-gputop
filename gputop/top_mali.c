@@ -191,10 +191,15 @@ gtop_check_keyboard(void)
 	
 		/*
 		 * Over serial reading input chars is problematic as we need 3-bytes.
+		 * Break out if a termination signal was received to avoid spinning
+		 * forever when read() returns EINTR.
 		 */
 		do {
 			nread = read(STDIN_FILENO, &buf, sizeof(buf));
-		} while (nread == -1 || nread == 2 || nread == 0);
+		} while ((nread == -1 || nread == 2 || nread == 0) && !sig_recv);
+
+		if (sig_recv)
+			return -1;
 	
 		/* mask the other bytes as buf will be overwritten when the third byte
 		 * is read, see top.h as for serial we've encoded the arrow keys with
@@ -551,6 +556,7 @@ int main(int argc, char *argv[])
 	install_sighandler();
 
 	tty_init(&tty_old);
+	gtop_enable_gpu_profile(NULL);
 
 	gtop_display_mali_gpu_info();
 	uint8_t	last_page =curr_page;
@@ -610,6 +616,8 @@ int main(int argc, char *argv[])
        perf_ddr_enabled=0;
   }
 #endif
+
+	gtop_disable_gpu_profile(NULL);
 	tty_reset(&tty_old);
 	return 0;
 }

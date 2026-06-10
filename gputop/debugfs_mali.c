@@ -692,6 +692,55 @@ int debugfs_get_gpu_usage(struct debugfs_mali_info *info, const char *path)
    return -1;
 }
 
+static int debugfs_set_gpu_profile(const char *path, int enable)
+{
+   FILE *file = NULL;
+   char buf[16];
+   int val = -1;
+   const char *str = enable ? "1" : "0";
+
+   if (!path) {
+      file = debugfs_fopen("gpu_profile", "r+");
+   } else {
+      file = fopen(path, "r+");
+   }
+   if (!file)
+      return 0;
+
+   if (fwrite(str, 1, 1, file) != 1) {
+      fprintf(stderr, "Failed to write %s to gpu_profile\n", str);
+      fclose(file);
+      return -1;
+   }
+
+   /* read back to verify */
+   rewind(file);
+   memset(buf, 0, sizeof(buf));
+   if (fgets(buf, sizeof(buf), file) == NULL) {
+      fprintf(stderr, "Failed to read back gpu_profile\n");
+      fclose(file);
+      return -1;
+   }
+   fclose(file);
+
+   if (sscanf(buf, "%d", &val) != 1 || val != enable) {
+      fprintf(stderr, "gpu_profile verify failed: expected %d, got %d\n", enable, val);
+      return -1;
+   }
+
+   return 0;
+}
+
+int gtop_enable_gpu_profile(const char *path)
+{
+   return debugfs_set_gpu_profile(path, 1);
+}
+
+int gtop_disable_gpu_profile(const char *path)
+{
+   return debugfs_set_gpu_profile(path, 0);
+}
+
 void debugfs_free_kctx_clients(struct debugfs_kctx_client *kctx_clients){
    struct debugfs_kctx_client *it = kctx_clients->head;
 
