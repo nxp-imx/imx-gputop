@@ -16,7 +16,7 @@ option (MALI_GPU    "Mali gpu" OFF)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -Wall -Wextra -Werror -Wstrict-prototypes -Wmissing-prototypes -std=c99 -O2")
 
-execute_process(COMMAND git --git-dir ${CMAKE_SOURCE_DIR}/.git log COMMAND head -1 COMMAND awk "{print $2}" COMMAND head -c 12 OUTPUT_VARIABLE GIT_SHA_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git --git-dir ${CMAKE_SOURCE_DIR}/.git log --pretty=%H COMMAND head -1 -c 12 OUTPUT_VARIABLE GIT_SHA_VERSION)
 message(STATUS "Git version is ${GIT_SHA_VERSION}")
 
 # if neither static nor shared is enabled default to shared
