@@ -2,30 +2,30 @@
   "SPDXID": "SPDXRef-DOCUMENT",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2026-06-02T02:45:10Z",
+    "created": "2026-08-25T03:33:45Z",
     "creators": [
       "Organization: NXP"
     ],
-    "licenseListVersion": "3.26"
+    "licenseListVersion": "3.28"
   },
-  "name": "imx-gputop-lf-6.18.20-2.0.0",
+  "name": "imx-gputop-lf-6.18.37-2.1.0",
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://nxp.com/spdx/e1c2812c-12b9-4585-9a8a-9471a86e31b6",
+  "documentNamespace": "https://nxp.com/spdx/20b3ae83-29b9-4fb4-85ba-a8ea4ac8d958",
   "packages": [
     {
-      "SPDXID": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6",
+      "SPDXID": "SPDXRef-package-20b3ae83-29b9-4fb4-85ba-a8ea4ac8d958",
       "name": "imx-gputop",
-      "versionInfo": "lf-6.18.20-2.0.0",
+      "versionInfo": "lf-6.18.37-2.1.0",
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "downloadLocation": "https://github.com/nxp-imx/imx-gputop -b lf-6.18.20-2.0.0",
+      "downloadLocation": "https://github.com/nxp-imx/imx-gputop -b lf-6.18.37-2.1.0",
       "originator": "Organization: NXP",
       "supplier": "NOASSERTION",
       "externalRefs": [],
       "filesAnalyzed": false
     },
     {
-      "SPDXID": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6---d1c06607-93d1-4404-bfce-8ecda9a15022",
+      "SPDXID": "SPDXRef-package-20b3ae83-29b9-4fb4-85ba-a8ea4ac8d958---d1c06607-93d1-4404-bfce-8ecda9a15022",
       "name": "Mali Bifrost GPU Kernel Driver",
       "versionInfo": "r39p0-01eac0",
       "licenseConcluded": "MIT",
@@ -42,12 +42,12 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
-      "relatedSpdxElement": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6"
+      "relatedSpdxElement": "SPDXRef-package-20b3ae83-29b9-4fb4-85ba-a8ea4ac8d958"
     },
     {
-      "spdxElementId": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6",
+      "spdxElementId": "SPDXRef-package-20b3ae83-29b9-4fb4-85ba-a8ea4ac8d958",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-package-e1c2812c-12b9-4585-9a8a-9471a86e31b6---d1c06607-93d1-4404-bfce-8ecda9a15022"
+      "relatedSpdxElement": "SPDXRef-package-20b3ae83-29b9-4fb4-85ba-a8ea4ac8d958---d1c06607-93d1-4404-bfce-8ecda9a15022"
     }
   ]
 }
